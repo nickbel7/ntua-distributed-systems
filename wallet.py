@@ -12,19 +12,22 @@ class Wallet:
 
 	def __init__(self):
 		"""
-	    Initialize a wallet
+	    Initialize a wallet (generate_wallet)
 	    """
 		# Reference: https://www.easydevguide.com/posts/python_rsa_keys
 		key = RSA.generate(2048) # bits: 2048
 		
-		self.public_key = key
-		self.private_key = key.publickey()
+		self.private_key = key
+		self.public_key = key.publickey()
 		self.address = key.publickey()
 		# self.transactions
 
 	def balance():
 		"""
 	    Get the total wallet balance
-        """
+		"""
 		#...
 		# Calculate the sum of all UTXOs
+
+new_wallet = Wallet()
+print(new_wallet.private_key.export_key().decode())

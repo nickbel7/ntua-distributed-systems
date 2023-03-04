@@ -1,26 +1,32 @@
 # BLOCK 
 ########################
-## 
+##
+
+from transaction import Transaction
 
 class Block:
-	def __init__(self):
-		##set
-
-		#self.previousHash
-		#self.timestamp
-		#self.hash
-		#self.nonce
-		#self.listOfTransactions
+    def __init__(self):
+        """
+        Initialize a block
+        """
+        self.previous_hash
+        self.timestamp
+        self.hash
+        self.nonce
+        self.transactions_list = []
 	
-	def myHash(self):
+    def myHash(self):
         """
         Return hash of the block
         """
         #calculate self.hash
 
-	def add_transaction(transaction transaction, blockchain blockchain):
-		#add a transaction to the block
-
+    def add_transaction(transaction, blockchain):
+		"""
+        Append a transaction to the current block
+        """
+        #add a transaction to the block
+    
     def validate_block(self):
         """
         Validate current_hash and previous_hash

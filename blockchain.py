@@ -2,13 +2,18 @@
 ########################
 ## 
 
+from block import Block
+
 class Blockchain:
     def __init__(self):
-        #self.blockchain (list<Block>)
-		#self.difficulty
-		#self.maxBlockTransactions
-		#self.minimumTransaction
-		#self.UTXOs
+        """
+        Initialize a Blockchain
+        """
+        self.blockchain = [] # list<Block>
+        self.difficulty
+        self.maxBlockTransactions
+        self.minimumTransaction
+        self.UTXOs = []
         
     def validate_chain():
         """
