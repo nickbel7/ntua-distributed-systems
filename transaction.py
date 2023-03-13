@@ -14,7 +14,7 @@ class Transaction:
         self.sender_address = sender_address        # To public key του wallet από το οποίο προέρχονται τα χρήματα
         self.receiver_address = recipient_address   # To public key του wallet στο οποίο θα καταλήξουν τα χρήματα
         self.amount = value                         # το ποσό που θα μεταφερθεί
-        self.transaction_id                        # το hash του transaction
+        self.transaction_id                         # το hash του transaction
         self.transaction_inputs                     # λίστα από Transaction Input 
         self.transaction_outputs                    # λίστα από Transaction Output 
         self.signature = sender_private_key
@@ -29,12 +29,11 @@ class Transaction:
         """
         """
 
-    def sign_transaction(self):
+    def sign_transaction(self, private_key):
         """
         Sign transaction with private key
         """
-        PKCS1_v1_5.new(rsa_key=self.signature).sign(self)
-        
+        self.signature = PKCS1_v1_5.new(rsa_key=private_key).sign(self)
 
     def broadcast_transaction(self):
         """
@@ -45,9 +44,15 @@ class Transaction:
         """
         Verify signature of sender (private, public keys)
         """
+        try:
+            PKCS1_v1_5.new(self.sender_address).verify(self.transaction_id, self.signature)
+            return True
+        except (ValueError, TypeError):
+            return False
 
     def validate_transaction(self):
         """
         Verify signature of sender + 
         Verify sender has enough amount to spend
         """
+        if (self.verify_signature == True) #&& check UTXOs...
