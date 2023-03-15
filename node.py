@@ -23,7 +23,19 @@ from transaction import Transaction
 
 class Node:
 
+    ################## CONSTRUCTOR ########################
+
     def __init__(self):
+        """
+        wallet:     Contains the wallet of each node
+                    Also contains the private key, public key == address
+        ip:         IP of the node
+        port:       Port of the service the node listens to
+        name:       A number that denotes the name of the node in the cluster
+        ring:       A list of all the nodes in the cluster
+        blockchain: A blockchain instance from the node's perspective
+        nbc:        Amount of noobcoins the node has (for validation purposes)
+        """
         self.wallet = Wallet() # create_wallet
         self.ip
         self.port
@@ -32,19 +44,25 @@ class Node:
         self.blockchain = Blockchain()
         self.nbc
 
-    def create_transaction(self):
+    ################## TRANSACTIONS ########################
+
+    def create_transaction(self, receiver, amount):
         our_address = self.wallet.public_key
         our_signature = self.wallet.private_key
-        receipient = 'test'
-        amount = 20
-        transaction = Transaction(our_address, our_signature, receipient, amount)
+        transaction = Transaction(our_address, our_signature, receiver, amount)
+
+    ################## BOOTSTRAPING ########################
 
     def add_node_to_ring(self, ip, port, address, balance):
+        """
+        ! BOOTSTRAP ONLY !
+        Adds a new node to the cluster
+        """
         self.ring.append(
             {
                 'ip': ip,
                 'port': port,
-                'address': address,
+                'address': address, # public key
                 'balance': balance
             }
         )
@@ -66,6 +84,7 @@ class Node:
         Broadcast the information about the nodes to all nodes in the blockchain
         """
         for node in self.ring:
+            # missing : check if node is self
             self.unicast_ring(node)
 
     def unicast_blockchain(self, node):
@@ -84,4 +103,5 @@ class Node:
         Broadcast the current state of the blockchain to all nodes
         """
         for node in self.ring:
+            # missing : check if node is self
             self.unicast_blockchain(node)
