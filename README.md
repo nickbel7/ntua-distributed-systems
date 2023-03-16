@@ -6,3 +6,11 @@
 
 ### Requirements
 - pycryptodome
+
+### Deploy 
+
+##### Docker
+1. Build the image <br>
+   `docker build -t ntua-distributed-systems .`
+2. Run the container in the specified port (ex. 8001) <br>
+   `docker run -p 8001:8000 ntua-distributed-systems`
