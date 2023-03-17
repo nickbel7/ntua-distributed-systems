@@ -3,3 +3,4 @@ uvicorn
 pycryptodome
 requests
 python-dotenv
+jsonify

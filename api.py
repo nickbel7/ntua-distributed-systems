@@ -56,8 +56,9 @@ node.ip = ip_address
 node.port = port
 
 # 3.2 See if it matches the corresponding ip and port
-if (ip_address == bootstrap_node["ip"] and port == bootstrap_node["port"]):
+if (ip_address == bootstrap_node["ip"] and str(port) == bootstrap_node["port"]):
     node.is_bootstrap = True
+    print("I am bootstrap")
 
 # Step 4.
 # Register node to the cluster
@@ -71,7 +72,8 @@ else:
 ################## ROUTES #####################
 @app.get("/")
 async def root():
-    return {"message": f"Welcome to Noobcoin. I am {socket.gethostname()} : {socket.gethostbyname(socket.gethostname())}"}
+    # return {"message": f"Welcome to Noobcoin. I am {socket.gethostname()} : {socket.gethostbyname(socket.gethostname())}"}
+    return {"message": f"Welcome to Noobcoin"}
 
 @app.post("/get_ring")
 async def get_ring():
