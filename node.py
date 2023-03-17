@@ -82,7 +82,7 @@ class Node:
             'address': self.wallet.address
         })
         if response.status_code == 200:
-            print("Node added successfully")
+            print("Node added successfully !")
             node.id = response.json()['id']
         else:
             print("Initiallization failed")
