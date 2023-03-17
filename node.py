@@ -16,6 +16,7 @@
 
 import requests
 import pickle
+import socket
 
 from wallet import Wallet
 from blockchain import Blockchain
@@ -31,18 +32,19 @@ class Node:
                     Also contains the private key, public key == address
         ip:         IP of the node
         port:       Port of the service the node listens to
-        name:       A number that denotes the name of the node in the cluster
+        id:         A number that denotes the name of the node in the cluster
         ring:       A list of all the nodes in the cluster
         blockchain: A blockchain instance from the node's perspective
         nbc:        Amount of noobcoins the node has (for validation purposes)
         """
         self.wallet = Wallet() # create_wallet
-        self.ip
-        self.port
-        self.name
+        self.ip = None
+        self.port = None
+        self.id = None
         self.ring = []   # (id, address, pub_key, balance)
         self.blockchain = Blockchain()
-        self.nbc
+        self.nbc = 0
+        self.is_bootstrap = False
 
     ################## TRANSACTIONS ########################
 
@@ -50,6 +52,7 @@ class Node:
         our_address = self.wallet.public_key
         our_signature = self.wallet.private_key
         transaction = Transaction(our_address, our_signature, receiver, amount)
+        return transaction
 
     ################## BOOTSTRAPING ########################
 
@@ -66,6 +69,23 @@ class Node:
                 'balance': balance
             }
         )
+
+    def unicast_node(self, node):
+        """
+        Sends information about self to the bootstrap node
+        """
+        request_address = 'http://' + node['ip'] + ':' + node['port']
+        request_url = request_address + '/let_me_in'
+        response = requests.post(request_url, data={
+            'ip': self.ip,
+            'port': self.port,
+            'address': self.wallet.address
+        })
+        if response.status_code == 200:
+            print("Node added successfully")
+            node.id = response.json()['id']
+        else:
+            print("Initiallization failed")
     
     def unicast_ring(self, node):
         """
@@ -84,8 +104,8 @@ class Node:
         Broadcast the information about the nodes to all nodes in the blockchain
         """
         for node in self.ring:
-            # missing : check if node is self
-            self.unicast_ring(node)
+            if (self.id != node.id):
+                self.unicast_ring(node)
 
     def unicast_blockchain(self, node):
         """
@@ -93,9 +113,9 @@ class Node:
         Send the information about the blockchain to a specified node
         """
         request_address = 'http://' + node['ip'] + ':' + node['port']
-        requeset_url = request_address + '/get_blockchain'
+        request_url = request_address + '/get_blockchain'
         # Serialize the data before the request
-        requests.post(pickle.dumps(self.blockchain))
+        requests.post(request_url, pickle.dumps(self.blockchain))
 
     def broadcast_blockchain(self):
         """
@@ -103,5 +123,22 @@ class Node:
         Broadcast the current state of the blockchain to all nodes
         """
         for node in self.ring:
-            # missing : check if node is self
-            self.unicast_blockchain(node)
+            if (self.id != node.id):
+                self.unicast_blockchain(node)
+
+    def unicast_initial_nbc(self, node):
+        """
+        ! BOOTSTRAP ONLY !
+        Send the initial amount of 100 nbc to a specified node
+        """
+        # request_address = 'http://' + node['ip'] + ':' + node['port']
+        # request_url = request_address + '/get_transaction'
+        # Create initial transaction
+        transaction = self.create_transaction(node['address'], 100)
+        # Serialize the data before the request
+        # requests.post(request_url, pickle.dumps(transaction))
+    
+    def broadcast_initial_nbc(self):
+        for node in self.ring:
+            if (self.id != node.id):
+                self.unicast_initial_nbc(node)

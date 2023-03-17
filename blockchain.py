@@ -10,9 +10,9 @@ class Blockchain:
         Initialize a Blockchain
         """
         self.blockchain = [] # list<Block>
-        self.difficulty
-        self.maxBlockTransactions
-        self.minimumTransaction
+        self.difficulty = None
+        self.maxBlockTransactions = None
+        self.minimumTransaction = None
         self.UTXOs = []
         
     def validate_chain():
