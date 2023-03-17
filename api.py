@@ -1,11 +1,15 @@
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import os
 import socket
-import jsonify
+import json
 import uvicorn
 import argparse
+import pickle
+import time
+import threading
 
 from node import Node
 
@@ -22,6 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+################## ARGUMENTS #####################
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
 args = argParser.parse_args()
@@ -34,8 +39,8 @@ node = Node()
 # Step 2.
 # Get info about the cluster, bootstrap node
 load_dotenv()
-total_nodes = os.getenv('TOTAL_NODES')
-total_nbc = 100 * total_nodes
+total_nodes = int(os.getenv('TOTAL_NODES'))
+total_nbc = total_nodes * 100
 
 bootstrap_node = {
     'ip': os.getenv('BOOTSTRAP_IP'),
@@ -43,28 +48,31 @@ bootstrap_node = {
 }
 
 # Step 3.
-# Decide if node is the Bootstrap node
-# 3.1 Get the ip address, port
+# Set the IP and PORT
+# IP ADDRESS
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 ip_address = s.getsockname()[0]
-print(ip_address)
+print('IP address: ', ip_address) # debug
 s.close()
+# PORT
 port = args.port
-print(port)
+print('PORT: ', port) # debug
 node.ip = ip_address
 node.port = port
 
-# 3.2 See if it matches the corresponding ip and port
+# Step 4. 
+# See if node is Bootstrap node
 if (ip_address == bootstrap_node["ip"] and str(port) == bootstrap_node["port"]):
     node.is_bootstrap = True
     print("I am bootstrap")
 
-# Step 4.
+# Step 5.
 # Register node to the cluster
 if (node.is_bootstrap):
     node.id = 0
-    node.add_node_to_ring(node.ip, node.port, node.wallet.address, total_nbc)
+    node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_nbc)
+    # Pending: Add initial transaction to the genesis block
     print(node.ring)
 else:
     node.unicast_node(bootstrap_node)
@@ -76,16 +84,21 @@ async def root():
     return {"message": f"Welcome to Noobcoin"}
 
 @app.post("/get_ring")
-async def get_ring():
+async def get_ring(request: Request):
     """
     Gets the completed list of nodes from Bootstrap node
     """
+    node.ring = await request.json()
+    print("Ring received successfully !")
 
-@app.post("/get_blockchain")
-async def get_blockchain():
+@app.route("/get_blockchain")
+async def get_blockchain(request: Request):
     """
     Gets the lastest version of the blockchain from the Bootstrap node
     """
+    node.blockchain = await request.json()
+    print("Blockchain received successfully !")
+
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
     #https://i.imgflip.com/2u5y6a.png?a466200
@@ -99,24 +112,27 @@ async def let_me_in(request: Request):
     port = data.get('port')
     address = data.get('address')
     id = len(node.ring)
+
     # Add node to the ring
-    node.add_node_to_ring(ip, port, address, 0)
+    node.add_node_to_ring(id, ip, port, address, 0)
     print(node.ring)
 
-    # Check if all nodes have joined
-    check_full_ring()
+    # Check if all nodes have joined 
+    # !! (do it after you have responded to the last node)
+    t = threading.Thread(target=check_full_ring)
+    t.start()
 
-    return jsonify({'id': id})
-
+    return JSONResponse({'id': id})
 
 def check_full_ring():
     """
     ! BOOTSTRAP ONLY !
     Checks if all nodes have been added to the ring
     """
-    if len(node.ring == total_nodes):
-        node.broadcast_ring
-        node.broadcast_blockchain
+    if (len(node.ring) >= total_nodes):
+        node.broadcast_ring()
+        # Pending :
+        # node.broadcast_blockchain
         # node.broadcast_initial_nbc
         
 ################## WEBSERVER #####################
