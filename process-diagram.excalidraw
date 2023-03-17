@@ -2791,21 +2791,21 @@
       "groupIds": [],
       "roundness": null,
       "seed": 503328807,
-      "version": 68,
-      "versionNonce": 1100861831,
+      "version": 72,
+      "versionNonce": 378436361,
       "isDeleted": false,
       "boundElements": null,
-      "updated": 1678904015354,
+      "updated": 1678904228831,
       "link": null,
       "locked": false,
-      "text": "1. get_rign\n2. get_blockchain",
+      "text": "1. get_ring\n2. get_blockchain",
       "fontSize": 20,
       "fontFamily": 1,
       "textAlign": "left",
       "verticalAlign": "top",
       "baseline": 43,
       "containerId": null,
-      "originalText": "1. get_rign\n2. get_blockchain"
+      "originalText": "1. get_ring\n2. get_blockchain"
     }
   ],
   "appState": {

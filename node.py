@@ -56,13 +56,14 @@ class Node:
 
     ################## BOOTSTRAPING ########################
 
-    def add_node_to_ring(self, ip, port, address, balance):
+    def add_node_to_ring(self, id, ip, port, address, balance):
         """
         ! BOOTSTRAP ONLY !
         Adds a new node to the cluster
         """
         self.ring.append(
             {
+                'id': id,
                 'ip': ip,
                 'port': port,
                 'address': address, # public key
@@ -81,9 +82,11 @@ class Node:
             'port': self.port,
             'address': self.wallet.address
         })
+
         if response.status_code == 200:
             print("Node added successfully !")
-            node.id = response.json()['id']
+            self.id = response.json()['id']
+            print('My ID is: ', self.id)
         else:
             print("Initiallization failed")
     
@@ -95,8 +98,7 @@ class Node:
         """
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_ring'
-        # Serialize the data before the request
-        requests.post(request_url, data=pickle.dumps(self.ring))
+        requests.post(request_url, json=(self.ring))
 
     def broadcast_ring(self):
         """
@@ -104,7 +106,7 @@ class Node:
         Broadcast the information about the nodes to all nodes in the blockchain
         """
         for node in self.ring:
-            if (self.id != node.id):
+            if (self.id != node['id']):
                 self.unicast_ring(node)
 
     def unicast_blockchain(self, node):
@@ -114,8 +116,9 @@ class Node:
         """
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_blockchain'
+        requests.post(request_url, json=(self.blockchain))
         # Serialize the data before the request
-        requests.post(request_url, pickle.dumps(self.blockchain))
+        # requests.post(request_url, pickle.dumps(self.blockchain))
 
     def broadcast_blockchain(self):
         """
@@ -123,7 +126,7 @@ class Node:
         Broadcast the current state of the blockchain to all nodes
         """
         for node in self.ring:
-            if (self.id != node.id):
+            if (self.id != node['id']):
                 self.unicast_blockchain(node)
 
     def unicast_initial_nbc(self, node):
@@ -140,5 +143,5 @@ class Node:
     
     def broadcast_initial_nbc(self):
         for node in self.ring:
-            if (self.id != node.id):
+            if (self.id != node['id']):
                 self.unicast_initial_nbc(node)
