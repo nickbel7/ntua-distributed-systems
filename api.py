@@ -83,6 +83,7 @@ if (node.is_bootstrap):
         sender_address='0', sender_private_key=None, receiver_address = node.wallet.address,  
         value = 100 * int(os.getenv('TOTAL_NODES'))
     )
+    
     first_transaction.calculate_hash()
 
     gen_block.transactions_list.append(first_transaction)
