@@ -2,24 +2,35 @@
 ########################
 ##
 
+import json
+
+from time import time
+from Crypto.Hash import SHA256
+
 from transaction import Transaction
 
 class Block:
-    def __init__(self):
+    def __init__(self, previous_hash):
         """
         Initialize a block
         """
-        self.previous_hash
-        self.timestamp
-        self.hash
-        self.nonce
+        self.previous_hash = previous_hash
+        self.timestamp = time()
+        self.hash = None
+        self.nonce = None
         self.transactions_list = []
 	
     def myHash(self):
         """
         Return hash of the block
         """
-        #calculate self.hash
+        block_info = [self.timestamp, [
+            tr.transaction_id for tr in self.transactions_list],
+            self.nonce, self.previous_hash]
+        
+        block_dump = json.dumps(block_info.__str__())
+
+        self.hash = SHA256.new(block_dump.encode("ISO-8859-2")).hexdigest()
         return
 
     def add_transaction(transaction, blockchain):

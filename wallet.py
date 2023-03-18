@@ -20,7 +20,7 @@ class Wallet:
 		self.private_key = key
 		self.public_key = key.publickey()
 		self.address = key.publickey().exportKey().decode('ISO-8859-1')
-		# self.transactions
+		self.transactions = []
 
 	def balance():
 		"""

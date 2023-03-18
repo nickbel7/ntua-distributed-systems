@@ -2,6 +2,9 @@
 ########################
 ## 
 
+import Crypto
+import Crypto.Random
+
 from Crypto.Hash import SHA
 from Crypto.Signature import PKCS1_v1_5
 
@@ -13,32 +16,46 @@ class Transaction:
         """
         self.sender_address = sender_address        # To public key του wallet από το οποίο προέρχονται τα χρήματα
         self.receiver_address = receiver_address    # To public key του wallet στο οποίο θα καταλήξουν τα χρήματα
-        self.amount = value                         # το ποσό που θα μεταφερθεί
-        self.transaction_id                         # το hash του transaction
-        self.transaction_inputs                     # λίστα από Transaction Input 
-        self.transaction_outputs                    # λίστα από Transaction Output 
-        self.signature = sender_private_key
+        self.amount = value                         # το ποσό που θα μεταφερθεί                    
+        self.transaction_inputs = None              # λίστα από Transaction Input 
+        self.transaction_outputs = None             # λίστα από Transaction Output 
+        self.signature = None
+
+        self.transaction_id = self.calculate_hash() # το hash του transaction
 
     def calculate_hash(self):
         """
         Calculate hash of transaction and use it as its ID
         """
-        self.transaction_id = SHA(self)
+        self.transaction_id = Crypto.Random.get_random_bytes(128).decode("ISO-8859-1")
+        return
 
     def to_dict(self):
         """
+        Convert transaction object to dictionary for readability.
         """
+        dict = { "sender_address": self.sender_address,
+                "receiver_address": self.receiver_address,
+                "amount" : self.amount,
+                "transaction_id" : self.transaction_id,
+                "transaction_inputs" : self.transaction_inputs,
+                "transaction_outputs" : self.transaction_outputs,
+                "signature" : self.signature
+                      }
+        return dict
 
     def sign_transaction(self, private_key):
         """
         Sign transaction with private key
         """
-        self.signature = PKCS1_v1_5.new(rsa_key=private_key).sign(self)
+        # self.signature = PKCS1_v1_5.new(rsa_key=private_key).sign(self)
+        return
 
     def broadcast_transaction(self):
         """
         Send transaction to all nodes
         """
+        # Tο έχω υλοποιήσει στο node... (Νικήτας)
     
     def verify_signature(self):
         """
