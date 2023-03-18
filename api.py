@@ -58,7 +58,7 @@ print('IP address: ', ip_address) # debug
 s.close()
 # PORT
 port = args.port
-print('PORT: ', port) # debug
+print('PORT: ', port) # debug 
 node.ip = ip_address
 node.port = port
 
