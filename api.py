@@ -12,6 +12,7 @@ import time
 import threading
 
 from node import Node
+from transaction import Transaction
 
 app = FastAPI()
 # app = APIRouter()
@@ -70,10 +71,29 @@ if (ip_address == bootstrap_node["ip"] and str(port) == bootstrap_node["port"]):
 # Step 5.
 # Register node to the cluster
 if (node.is_bootstrap):
+    # Add himself to ring
     node.id = 0
     node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_nbc)
-    # Pending: Add initial transaction to the genesis block
-    print(node.ring)
+    # Defines the genesis block
+    gen_block = node.create_new_block()
+    gen_block.nonce = 0
+
+    # Add initial transaction to the genesis block
+    first_transaction = Transaction(
+        sender_address='0', sender_private_key=None, receiver_address = node.wallet.address,  
+        value = 100 * int(os.getenv('TOTAL_NODES'))
+    )
+    first_transaction.calculate_hash()
+
+    gen_block.transactions_list.append(first_transaction)
+    gen_block.myHash()
+
+    # Add genesis block to the chain
+    node.blockchain.chain.append(gen_block)
+    
+    # print("RING AFTER CREATION OF GENESIS BLOCK")
+    # print(node.ring)
+
 else:
     node.unicast_node(bootstrap_node)
 
@@ -91,13 +111,32 @@ async def get_ring(request: Request):
     node.ring = await request.json()
     print("Ring received successfully !")
 
-@app.route("/get_blockchain")
+@app.post("/get_blockchain")
 async def get_blockchain(request: Request):
     """
     Gets the lastest version of the blockchain from the Bootstrap node
     """
-    node.blockchain = await request.json()
+    data = await request.body()
+    node.blockchain = pickle.loads(data)
     print("Blockchain received successfully !")
+
+@app.post("/get_transaction")
+async def get_transaction(request: Request):
+    """
+    Gets an incoming transaction and adds it in the block.
+    """
+    # Fetch transaction data
+    data = await request.body()
+    new_transaction = pickle.loads(data)
+
+    # Add transaction to block
+    node.add_transaction_to_block(new_transaction)
+
+    print("Transaction received")
+
+    # print("RING AFTER RECEPTION OF TRANSACTION")
+    # print(node.ring)
+    
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
@@ -115,7 +154,9 @@ async def let_me_in(request: Request):
 
     # Add node to the ring
     node.add_node_to_ring(id, ip, port, address, 0)
-    print(node.ring)
+
+    # print("RING AFTER INSERTION OF NODE")
+    # print(node.ring)
 
     # Check if all nodes have joined 
     # !! (do it after you have responded to the last node)
@@ -129,11 +170,11 @@ def check_full_ring():
     ! BOOTSTRAP ONLY !
     Checks if all nodes have been added to the ring
     """
+    time.sleep(2)
     if (len(node.ring) >= total_nodes):
         node.broadcast_ring()
-        # Pending :
-        # node.broadcast_blockchain
-        # node.broadcast_initial_nbc
+        node.broadcast_blockchain()
+        node.broadcast_initial_nbc()
         
 ################## WEBSERVER #####################
 uvicorn.run(app, host="0.0.0.0", port=port)
