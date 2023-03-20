@@ -20,7 +20,6 @@ class Transaction:
         self.transaction_inputs = None              # λίστα από Transaction Input 
         self.transaction_outputs = None             # λίστα από Transaction Output 
         self.signature = None
-
         self.transaction_id = self.calculate_hash() # το hash του transaction
 
     def calculate_hash(self):
@@ -34,14 +33,15 @@ class Transaction:
         """
         Convert transaction object to dictionary for readability.
         """
-        dict = { "sender_address": self.sender_address,
-                "receiver_address": self.receiver_address,
-                "amount" : self.amount,
-                "transaction_id" : self.transaction_id,
-                "transaction_inputs" : self.transaction_inputs,
-                "transaction_outputs" : self.transaction_outputs,
-                "signature" : self.signature
-                      }
+        dict = {
+            "sender_address": self.sender_address,
+            "receiver_address": self.receiver_address,
+            "amount" : self.amount,
+            "transaction_id" : self.transaction_id,
+            "transaction_inputs" : self.transaction_inputs,
+            "transaction_outputs" : self.transaction_outputs,
+            "signature" : self.signature
+        }
         return dict
 
     def sign_transaction(self, private_key):
@@ -50,12 +50,6 @@ class Transaction:
         """
         # self.signature = PKCS1_v1_5.new(rsa_key=private_key).sign(self)
         return
-
-    def broadcast_transaction(self):
-        """
-        Send transaction to all nodes
-        """
-        # Tο έχω υλοποιήσει στο node... (Νικήτας)
     
     def verify_signature(self):
         """

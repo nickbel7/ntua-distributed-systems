@@ -32,6 +32,33 @@ argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
 args = argParser.parse_args()
 
+################## HELPER FUNCTIONS #####################
+def create_genesis_block():
+    """
+    ! BOOTSTRAP ONLY !
+    Create the first block of the blockchain (GENESIS BLOCK)
+    """
+    # 1. Create new block
+    gen_block = node.create_new_block() # previous_hash autogenerates
+    gen_block.nonce = 0
+
+    # 2. Create first transaction
+    first_transaction = Transaction(
+        sender_address='0', 
+        sender_private_key=None, 
+        receiver_address = node.wallet.address, 
+        value = total_nbc
+    )
+
+    # 3. Add transaction to genesis block
+    gen_block.transactions_list.append(first_transaction)
+    gen_block.calculate_hash() # void
+
+    # 4. Add genesis block to bockchain
+    node.blockchain.chain.append(gen_block)
+    
+    return
+
 ################## INITIALIZATION #####################
 # Step 1. 
 # Initialize the new node
@@ -58,7 +85,7 @@ print('IP address: ', ip_address) # debug
 s.close()
 # PORT
 port = args.port
-print('PORT: ', port) # debug 
+print('PORT: ', port) # debug
 node.ip = ip_address
 node.port = port
 
@@ -74,26 +101,7 @@ if (node.is_bootstrap):
     # Add himself to ring
     node.id = 0
     node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_nbc)
-    # Defines the genesis block
-    gen_block = node.create_new_block()
-    gen_block.nonce = 0
-
-    # Add initial transaction to the genesis block
-    first_transaction = Transaction(
-        sender_address='0', sender_private_key=None, receiver_address = node.wallet.address,  
-        value = 100 * int(os.getenv('TOTAL_NODES'))
-    )
-    
-    first_transaction.calculate_hash()
-
-    gen_block.transactions_list.append(first_transaction)
-    gen_block.myHash()
-
-    # Add genesis block to the chain
-    node.blockchain.chain.append(gen_block)
-    
-    # print("RING AFTER CREATION OF GENESIS BLOCK")
-    # print(node.ring)
+    create_genesis_block()
 
 else:
     node.unicast_node(bootstrap_node)
@@ -109,7 +117,9 @@ async def get_ring(request: Request):
     """
     Gets the completed list of nodes from Bootstrap node
     """
-    node.ring = await request.json()
+    data = await request.body()
+    node.ring = pickle.loads(data)
+
     print("Ring received successfully !")
 
 @app.post("/get_blockchain")
@@ -119,6 +129,7 @@ async def get_blockchain(request: Request):
     """
     data = await request.body()
     node.blockchain = pickle.loads(data)
+
     print("Blockchain received successfully !")
 
 @app.post("/get_transaction")
@@ -126,18 +137,13 @@ async def get_transaction(request: Request):
     """
     Gets an incoming transaction and adds it in the block.
     """
-    # Fetch transaction data
     data = await request.body()
     new_transaction = pickle.loads(data)
 
     # Add transaction to block
     node.add_transaction_to_block(new_transaction)
 
-    print("Transaction received")
-
-    # print("RING AFTER RECEPTION OF TRANSACTION")
-    # print(node.ring)
-    
+    print("New transaction received")
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
@@ -155,9 +161,6 @@ async def let_me_in(request: Request):
 
     # Add node to the ring
     node.add_node_to_ring(id, ip, port, address, 0)
-
-    # print("RING AFTER INSERTION OF NODE")
-    # print(node.ring)
 
     # Check if all nodes have joined 
     # !! (do it after you have responded to the last node)

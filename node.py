@@ -54,12 +54,14 @@ class Node:
         """
         Creates a new block for the blockchain
         """
+        previous_hash = None
+        # Special case for GENESIS block
         if (len(self.blockchain.chain) == 0):
             previous_hash = 1
-            self.current_block = Block(previous_hash)
+            
+        self.current_block = Block(previous_hash)
         
         return self.current_block
-
 
     def add_transaction_to_block(self, transaction):
         """
@@ -83,7 +85,7 @@ class Node:
             if node['address'] == transaction.receiver_address:
                 node['balance'] += transaction.amount
         # debug
-        # print(self.ring)
+        print(self.ring)
 
         # More to do...
         return
@@ -154,7 +156,8 @@ class Node:
         """
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_ring'
-        requests.post(request_url, json=(self.ring))
+        # requests.post(request_url, json=(self.ring)) # alternative
+        requests.post(request_url, pickle.dumps(self.ring))
 
     def broadcast_ring(self):
         """
@@ -172,8 +175,6 @@ class Node:
         """
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_blockchain'
-        # requests.post(request_url, json=(self.blockchain))
-        # Serialize the data before the request
         requests.post(request_url, pickle.dumps(self.blockchain))
 
     def broadcast_blockchain(self):
@@ -190,9 +191,7 @@ class Node:
         ! BOOTSTRAP ONLY !
         Send the initial amount of 100 nbc to a specified node
         """
-        request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/get_transaction'
-        # Create initial transaction
+        # Create initial transaction (100 noobcoins)
         transaction = self.create_transaction(node['address'], 100)
         transaction.calculate_hash()
 

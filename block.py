@@ -20,17 +20,20 @@ class Block:
         self.nonce = None
         self.transactions_list = []
 	
-    def myHash(self):
+    def calculate_hash(self):
         """
         Return hash of the block
         """
-        block_info = [self.timestamp, [
-            tr.transaction_id for tr in self.transactions_list],
-            self.nonce, self.previous_hash]
+        block_info = [
+            self.timestamp, 
+            [tr.transaction_id for tr in self.transactions_list],
+            self.nonce, 
+            self.previous_hash
+        ]
         
         block_dump = json.dumps(block_info.__str__())
-
         self.hash = SHA256.new(block_dump.encode("ISO-8859-2")).hexdigest()
+        
         return
 
     def add_transaction(transaction, blockchain):
