@@ -9,7 +9,7 @@ class Blockchain:
         """
         Initialize a Blockchain
         """
-        self.blockchain = [] # list<Block>
+        self.chain = [] # list<Block>
         self.difficulty = None
         self.maxBlockTransactions = None
         self.minimumTransaction = None
