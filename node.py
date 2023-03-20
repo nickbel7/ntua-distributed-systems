@@ -14,15 +14,20 @@
 # database with the UTXOs derived from the mined block's transactions
 # !! In case of conflict, get the UTXOs from the node with the longest chain
 
+from collections import deque
+from dotenv import load_dotenv
 import requests
 import pickle
-import socket
 import json
+import os
 
 from wallet import Wallet
 from blockchain import Blockchain
 from transaction import Transaction
 from block import Block
+
+load_dotenv()
+block_size = int(os.getenv('BLOCK_SIZE'))
 
 class Node:
 
@@ -48,6 +53,7 @@ class Node:
         self.nbc = 0
         self.is_bootstrap = False
         self.current_block = None
+        self.pending_blocks = deque()
 
     ##################### BLOCKS ###########################
     def create_new_block(self):
@@ -69,8 +75,10 @@ class Node:
 
         If current block is None, then it creates one (the genesis block)
         """
+        # Pending: Validate transaction
 
-        # If the transaction is related to node, update wallet
+        # ==== UPDATING BLOCKCHAIN STATE ====
+        # 1. If the transaction is related to node, update wallet
         if (transaction.receiver_address == self.wallet.address or 
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
@@ -78,7 +86,7 @@ class Node:
         print("Transaction appended to wallet")
         # print(self.wallet.transactions)
         
-        # Update the balance of sender and receiver in the ring.
+        # 2. Update the balance of sender and receiver in the ring.
         for node in self.ring:
             if node['address'] == transaction.sender_address:
                 node['balance'] -= transaction.amount
@@ -87,8 +95,28 @@ class Node:
         # debug
         print(self.ring)
 
-        # More to do...
+        # ==== ADDING TRANSACTION TO BLOCK ====
+
+        # Check if there is not an existing block create one
+        if (self.check_full_block()):
+            # Pending: begin the mining process
+            previous_block = self.blockchain.chain[-1]
+            previous_hash = previous_block.hash
+            new_block = self.create_new_block()
+            new_block.previous_hash = previous_hash
+            self.current_block = new_block
+            self.pending_blocks.appendleft(new_block)
+
+        # Pending: Add transaction to the block
+        self.current_block.transactions_list.append(transaction)
+
         return
+    
+    def check_full_block(self):
+        if (len(self.current_block.transactions_list) == block_size):
+            return True
+        else:
+            return False
 
     ################## TRANSACTIONS ########################
 
@@ -199,6 +227,10 @@ class Node:
         self.broadcast_transaction(transaction)
     
     def broadcast_initial_nbc(self):
+        """
+        ! BOOTSTRAP ONLY !
+        Broadcast the initial amount of 100 nbc to each node
+        """
         for node in self.ring:
             if (self.id != node['id']):
                 self.unicast_initial_nbc(node)
