@@ -17,10 +17,12 @@
 import requests
 import pickle
 import socket
+import json
 
 from wallet import Wallet
 from blockchain import Blockchain
 from transaction import Transaction
+from block import Block
 
 class Node:
 
@@ -45,14 +47,68 @@ class Node:
         self.blockchain = Blockchain()
         self.nbc = 0
         self.is_bootstrap = False
+        self.current_block = None
+
+    ##################### BLOCKS ###########################
+    def create_new_block(self):
+        """
+        Creates a new block for the blockchain
+        """
+        if (len(self.blockchain.chain) == 0):
+            previous_hash = 1
+            self.current_block = Block(previous_hash)
+        
+        return self.current_block
+
+
+    def add_transaction_to_block(self, transaction):
+        """
+        Add transaction to the block.
+
+        If current block is None, then it creates one (the genesis block)
+        """
+
+        # If the transaction is related to node, update wallet
+        if (transaction.receiver_address == self.wallet.address or 
+            transaction.sender_address == self.wallet.address):
+            self.wallet.transactions.append(transaction)
+        #debug 
+        print("Transaction appended to wallet")
+        # print(self.wallet.transactions)
+        
+        # Update the balance of sender and receiver in the ring.
+        for node in self.ring:
+            if node['address'] == transaction.sender_address:
+                node['balance'] -= transaction.amount
+            if node['address'] == transaction.receiver_address:
+                node['balance'] += transaction.amount
+        # debug
+        # print(self.ring)
+
+        # More to do...
+        return
 
     ################## TRANSACTIONS ########################
 
     def create_transaction(self, receiver, amount):
-        our_address = self.wallet.public_key
+        our_address = self.wallet.address
         our_signature = self.wallet.private_key
         transaction = Transaction(our_address, our_signature, receiver, amount)
+        
+        # Sign the transaction.
+        transaction.sign_transaction(our_signature)
+
         return transaction
+    
+    def unicast_transaction(self, node, transaction):
+        request_address = 'http://' + node['ip'] + ':' + node['port']
+        request_url = request_address + '/get_transaction'
+        requests.post(request_url, pickle.dumps(transaction))
+        
+    def broadcast_transaction(self, transaction):
+        for node in self.ring:
+            if (self.id != node['id']):
+                self.unicast_transaction(node, transaction)
 
     ################## BOOTSTRAPING ########################
 
@@ -116,9 +172,9 @@ class Node:
         """
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_blockchain'
-        requests.post(request_url, json=(self.blockchain))
+        # requests.post(request_url, json=(self.blockchain))
         # Serialize the data before the request
-        # requests.post(request_url, pickle.dumps(self.blockchain))
+        requests.post(request_url, pickle.dumps(self.blockchain))
 
     def broadcast_blockchain(self):
         """
@@ -134,12 +190,14 @@ class Node:
         ! BOOTSTRAP ONLY !
         Send the initial amount of 100 nbc to a specified node
         """
-        # request_address = 'http://' + node['ip'] + ':' + node['port']
-        # request_url = request_address + '/get_transaction'
+        request_address = 'http://' + node['ip'] + ':' + node['port']
+        request_url = request_address + '/get_transaction'
         # Create initial transaction
         transaction = self.create_transaction(node['address'], 100)
-        # Serialize the data before the request
-        # requests.post(request_url, pickle.dumps(transaction))
+        transaction.calculate_hash()
+
+        # Broadcast transaction to other nodes in the network
+        self.broadcast_transaction(transaction)
     
     def broadcast_initial_nbc(self):
         for node in self.ring:
