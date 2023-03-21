@@ -42,13 +42,6 @@ class Block:
         self.hash = SHA256.new(block_dump.encode("ISO-8859-2")).hexdigest()
         
         return self.hash
-
-    def add_transaction(transaction, blockchain):
-        """
-        Append a transaction to the current block
-        """
-        #add a transaction to the block
-        return
     
     def validate_block(self, blockchain: Blockchain):
         """
@@ -58,13 +51,13 @@ class Block:
                2)if the previous_hash field is equal to the the hash of the actual previous block
         """
         # Special case: If it is the genesis block, it's valid 
-        if (self.previous_hash == 0 & self.nonce == 0):
+        if (self.previous_hash == 0 and self.nonce == 0):
             return True
         
         # Get last block of the chain and check its hash
         prev_block = blockchain.chain[-1]
         if ((self.previous_hash == prev_block.hash)
-            & (self.hash.startswith('0' * blockchain.difficulty))):
+            and (self.hash.startswith('0' * blockchain.difficulty))):
             # debug
             print('Block validated !')
             return True
@@ -82,17 +75,8 @@ class Block:
             current_hash = self.calculate_hash()
             # 2. Check if a correct nonce has been found
             if (current_hash.startswith('0' * mining_difficulty)):
-                self.broadcat_block
-                break
+                return current_hash
             # 3. Try a different nonce
             current_nonce += 1
-        
-        return  
 
-    def broadcat_block():
-        """
-        Broadcast the validated block once the nonce has been found
-        """
-
-        return
-
+        return None

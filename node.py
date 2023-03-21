@@ -20,6 +20,7 @@ import requests
 import pickle
 import json
 import os
+from threading import Thread
 
 from wallet import Wallet
 from blockchain import Blockchain
@@ -44,6 +45,11 @@ class Node:
         ring:       A list of all the nodes in the cluster
         blockchain: A blockchain instance from the node's perspective
         nbc:        Amount of noobcoins the node has (for validation purposes)
+        is_bootstrap:   True if the current node is the Bootstrap node
+        current_block:  The block that lefts to be filled with transactions
+        pending_blocks: All the blocks that are filled with transactions but are not yet mined
+        is_mining:      True if the node is in a state of mining the pending_blocks
+        unmined_block:  True if the block that is currently being mined has not be mined by any other node 
         """
         self.wallet = Wallet() # create_wallet
         self.ip = None
@@ -55,7 +61,8 @@ class Node:
         self.is_bootstrap = False
         self.current_block = None
         self.pending_blocks = deque()
-
+        self.is_mining = False
+        self.unmined_block = True
 
 
     ##################### MINING ###########################
@@ -100,26 +107,72 @@ class Node:
 
         # ==== ADDING TRANSACTION TO BLOCK ====
 
-        # Check if there is not an existing block create one
-        if (self.check_full_block()):
-            # Pending: begin the mining process
-            previous_block = self.blockchain.chain[-1]
-            previous_hash = previous_block.hash
-            new_block = self.create_new_block()
-            new_block.previous_hash = previous_hash
-            self.current_block = new_block
-            self.pending_blocks.appendleft(new_block)
+        # Special case: after GENESIS block
+        if self.current_block is None:
+            self.current_block = self.create_new_block()
 
-        # Pending: Add transaction to the block
+        # Add transaction to the block
         self.current_block.transactions_list.append(transaction)
+
+        # Check if block is full (in order to put it in the pending blocks)
+        if (self.check_full_block()):
+            # 1. Add block list of pending blocks to be mined
+            self.pending_blocks.appendleft(self.current_block)
+            # 2. Create a new block
+            self.current_block = self.create_new_block()
+            # 3. Trigger mining process
+            mine_process()
+
+        # ==== MINING PROCESS ====
+
+        def mine_process():
+            if (self.pending_blocks and not self.is_mining):
+                # Pending: should start a new thread
+                # 1. Initialize the mining
+                self.is_mining = True
+                while(self.pending_blocks):
+                    print("Number of pending blocks: ", len(self.pending_blocks))
+                    # 2. Get first block in list
+                    mined_block = self.pending_blocks.pop()
+                    # 3. Try to find the nonce
+                    is_mined_by_me = self.mine_block(mined_block)
+                    # 4. Broadcast it if you found it first
+                    if (is_mined_by_me):
+                        self.broadcast_block(mined_block)
+                    # 5. Reset the unmined_block flag
+                    self.unmined_block = True
+                
+                # Send the is_mining flag to false
+                self.is_mining = False
+                return
 
         return
     
     def check_full_block(self):
+        """
+        Checks if latest block in node is full
+        """
         if (len(self.current_block.transactions_list) == block_size):
             return True
         else:
             return False
+
+    def mine_block(self, block: Block):
+        """
+        Try to find a nonce once the block capacity has been reached
+        """
+         # 1. Initial nonce
+        current_nonce = 0
+        while(self.unmined_block):
+            block.nonce = current_nonce
+            current_hash = block.calculate_hash()
+            # 2. Check if a correct nonce has been found
+            if (current_hash.startswith('0' * mining_difficulty)):
+                return True
+            # 3. Try a different nonce
+            current_nonce += 1
+
+        return False
 
     def unicast_block(self, node, block):
         """
@@ -137,6 +190,7 @@ class Node:
         for node in self.ring:
             if (self.id != node['id']):
                 self.unicast_block(node, block)
+
 
 
     ################## TRANSACTIONS ########################
