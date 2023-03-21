@@ -28,6 +28,7 @@ from block import Block
 
 load_dotenv()
 block_size = int(os.getenv('BLOCK_SIZE'))
+mining_difficulty = int(os.getenv('MINING_DIFFICULTY'))
 
 class Node:
 
@@ -55,7 +56,9 @@ class Node:
         self.current_block = None
         self.pending_blocks = deque()
 
-    ##################### BLOCKS ###########################
+
+
+    ##################### MINING ###########################
     def create_new_block(self):
         """
         Creates a new block for the blockchain
@@ -63,7 +66,7 @@ class Node:
         previous_hash = None
         # Special case for GENESIS block
         if (len(self.blockchain.chain) == 0):
-            previous_hash = 1
+            previous_hash = 0
             
         self.current_block = Block(previous_hash)
         
@@ -118,6 +121,24 @@ class Node:
         else:
             return False
 
+    def unicast_block(self, node, block):
+        """
+        Unicast the lastest mined block
+        """
+        request_address = 'http://' + node['ip'] + ':' + node['port']
+        request_url = request_address + '/get_block'
+        # requests.post(request_url, json=(self.ring)) # alternative
+        requests.post(request_url, pickle.dumps(block))
+    
+    def broadcast_block(self, block: Block):
+        """
+        Broadcast the lastest mined block
+        """
+        for node in self.ring:
+            if (self.id != node['id']):
+                self.unicast_block(node, block)
+
+
     ################## TRANSACTIONS ########################
 
     def create_transaction(self, receiver, amount):
@@ -139,6 +160,8 @@ class Node:
         for node in self.ring:
             if (self.id != node['id']):
                 self.unicast_transaction(node, transaction)
+
+
 
     ################## BOOTSTRAPING ########################
 

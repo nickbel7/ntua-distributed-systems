@@ -1,8 +1,15 @@
-# TRANSACTION 
+# BLOCKCHAIN 
 ########################
 ## 
 
+from dotenv import load_dotenv
+import os
+
 from block import Block
+
+load_dotenv()
+block_size = int(os.getenv('BLOCK_SIZE'))
+mining_difficulty = int(os.getenv('MINING_DIFFICULTY'))
 
 class Blockchain:
     def __init__(self):
@@ -10,8 +17,8 @@ class Blockchain:
         Initialize a Blockchain
         """
         self.chain = [] # list<Block>
-        self.difficulty = None
-        self.maxBlockTransactions = None
+        self.difficulty = mining_difficulty
+        self.maxBlockTransactions = block_size
         self.minimumTransaction = None
         self.UTXOs = []
         

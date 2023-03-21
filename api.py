@@ -145,6 +145,14 @@ async def get_transaction(request: Request):
 
     print("New transaction received")
 
+@app.post("/get_block")
+async def get_block(request: Request):
+    """
+    Gets an incoming mined block and adds it to the blockchain.
+    """
+    data = await request.body()
+    new_block = pickle.loads(data)
+
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
     #https://i.imgflip.com/2u5y6a.png?a466200
