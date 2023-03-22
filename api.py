@@ -175,6 +175,31 @@ async def get_block(request: Request):
 
     return JSONResponse('OK')
 
+@app.post("/create_transaction")
+async def create_transaction():
+    """
+    Creates a new transaction given a receiver wallet and an amount
+    """
+    # 1. Create transaction
+    # 2. Calculate hash
+    # 3. Add to block
+    # 4. Broadcast transaction
+
+@app.view("/view_transactions")
+async def view_transactions():
+    """
+    Returns the transactions of the last validated, mined block
+    """
+    # 1. Get last block in the chain
+    # 2. Return a list of transactions (sender, receiver, amount)
+
+@app.view("/get_balance")
+async def get_balance():
+    """
+    Gets the total balance for the given node (in NBCs)
+    """
+    # 1. Get the NBCs attribute from the node object
+
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
     #https://i.imgflip.com/2u5y6a.png?a466200
