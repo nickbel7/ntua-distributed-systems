@@ -87,6 +87,7 @@ class Node:
         If current block is None, then it creates one (the genesis block)
         """
         # Pending: Validate transaction
+        
         print("========= NEW TRANSACTION 💵 ===========")
 
         # ==== UPDATING BLOCKCHAIN STATE ====
@@ -96,7 +97,6 @@ class Node:
             self.wallet.transactions.append(transaction)
             #debug 
             print(f"1. Transaction appended to wallet. Got : {transaction.amount} NBCs")
-        # print(self.wallet.transactions)
         
         # 2. Update the balance of sender and receiver in the ring.
         for node in self.ring:

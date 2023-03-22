@@ -10,6 +10,7 @@ import argparse
 import pickle
 import time
 import threading
+import requests
 
 from node import Node
 from transaction import Transaction
@@ -30,6 +31,7 @@ app.add_middleware(
 ################## ARGUMENTS #####################
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
+argParser.add_argument("--ip", help="IP of the host")
 args = argParser.parse_args()
 
 ################## HELPER FUNCTIONS #####################
@@ -77,12 +79,15 @@ bootstrap_node = {
 
 # Step 3.
 # Set the IP and PORT
+# DOCKER SPECIFIC
+# ip_address = socket.gethostbyname('host.docker.internal')
+ip_address = args.ip
 # IP ADDRESS
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-ip_address = s.getsockname()[0]
+# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# s.connect(("8.8.8.8", 80))
+# ip_address = s.getsockname()[0]
 print('IP address: ', ip_address) # debug
-s.close()
+# s.close()
 # PORT
 port = args.port
 print('PORT: ', port) # debug
