@@ -87,7 +87,7 @@ s.close()
 port = args.port
 print('PORT: ', port) # debug
 node.ip = ip_address
-node.port = port
+node.port = str(port)
 
 # Step 4. 
 # See if node is Bootstrap node
@@ -139,11 +139,10 @@ async def get_transaction(request: Request):
     """
     data = await request.body()
     new_transaction = pickle.loads(data)
+    print("New transaction received successfully !")
 
     # Add transaction to block
     node.add_transaction_to_block(new_transaction)
-
-    print("New transaction received")
 
 @app.post("/get_block")
 async def get_block(request: Request):
@@ -152,6 +151,24 @@ async def get_block(request: Request):
     """
     data = await request.body()
     new_block = pickle.loads(data)
+    print("New block received successfully !")
+
+    # Pending: implement logic when receiving a block
+    # 1. Check validity of block
+    previous_hash = node.blockchain.chain[-1].hash
+    new_block.previous_hash = previous_hash 
+    if (new_block.validate_block(node.blockchain)):
+        # If it is valid:
+        # 1. Stop the current block mining
+        node.unmined_block = False
+        # 2. Add block to the blockchain
+        node.blockchain.chain.append(new_block)
+        print("✅📦! \nAdding it to the chain")
+        print("Blockchain length: ", len(node.blockchain.chain))
+    else:
+        print("❌📦 Something went wrong with validation :(")
+
+    return JSONResponse('OK')
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):

@@ -20,7 +20,8 @@ import requests
 import pickle
 import json
 import os
-from threading import Thread
+import random
+import threading
 
 from wallet import Wallet
 from blockchain import Blockchain
@@ -86,14 +87,15 @@ class Node:
         If current block is None, then it creates one (the genesis block)
         """
         # Pending: Validate transaction
+        print("========= NEW TRANSACTION 💵 ===========")
 
         # ==== UPDATING BLOCKCHAIN STATE ====
         # 1. If the transaction is related to node, update wallet
         if (transaction.receiver_address == self.wallet.address or 
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
-        #debug 
-        print("Transaction appended to wallet")
+            #debug 
+            print(f"1. Transaction appended to wallet. Got : {transaction.amount} NBCs")
         # print(self.wallet.transactions)
         
         # 2. Update the balance of sender and receiver in the ring.
@@ -103,9 +105,9 @@ class Node:
             if node['address'] == transaction.receiver_address:
                 node['balance'] += transaction.amount
         # debug
-        print(self.ring)
+        print("2. Updated ring: ", self.ring)
 
-        # ==== ADDING TRANSACTION TO BLOCK ====
+        # ==== ADDING TRANSACTION TO BLOCK & MINING ====
 
         # Special case: after GENESIS block
         if self.current_block is None:
@@ -113,7 +115,8 @@ class Node:
 
         # Add transaction to the block
         self.current_block.transactions_list.append(transaction)
-
+        print("3. Current Block Transactions: ", [trans.amount for trans in self.current_block.transactions_list])
+        print("4. Block size: ", len(self.current_block.transactions_list))
         # Check if block is full (in order to put it in the pending blocks)
         if (self.check_full_block()):
             # 1. Add block list of pending blocks to be mined
@@ -121,30 +124,9 @@ class Node:
             # 2. Create a new block
             self.current_block = self.create_new_block()
             # 3. Trigger mining process
-            mine_process()
-
-        # ==== MINING PROCESS ====
-
-        def mine_process():
-            if (self.pending_blocks and not self.is_mining):
-                # Pending: should start a new thread
-                # 1. Initialize the mining
-                self.is_mining = True
-                while(self.pending_blocks):
-                    print("Number of pending blocks: ", len(self.pending_blocks))
-                    # 2. Get first block in list
-                    mined_block = self.pending_blocks.pop()
-                    # 3. Try to find the nonce
-                    is_mined_by_me = self.mine_block(mined_block)
-                    # 4. Broadcast it if you found it first
-                    if (is_mined_by_me):
-                        self.broadcast_block(mined_block)
-                    # 5. Reset the unmined_block flag
-                    self.unmined_block = True
-                
-                # Send the is_mining flag to false
-                self.is_mining = False
-                return
+            # (!! put it in a seperate thread to avoid blocking other processes)
+            mining_thread = threading.Thread(target=self.mine_process)
+            mining_thread.start()
 
         return
     
@@ -157,22 +139,51 @@ class Node:
         else:
             return False
 
+    def mine_process(self):
+        if (self.pending_blocks and not self.is_mining):
+            # Pending: should start a new thread
+            print("========== BEGINING MINING ⛏️  ============")
+            # 1. Initialize the mining
+            self.is_mining = True
+            while(self.pending_blocks):
+                print("Number of pending blocks: ", len(self.pending_blocks))
+                # 2. Get first block in list
+                mined_block = self.pending_blocks.pop()
+                # 3. Try to find the nonce
+                is_mined_by_me = self.mine_block(mined_block)
+                # 4. Broadcast it if you found it first
+                if (is_mined_by_me):
+                    print("Block was mined by: ", self.id)
+                    self.broadcast_block(mined_block)
+                    print("Block broadcasted successfully !")
+                # 5. Reset the unmined_block flag
+                self.unmined_block = True
+            
+            # Send the is_mining flag to false
+            self.is_mining = False
+            return
+
     def mine_block(self, block: Block):
         """
         Try to find a nonce once the block capacity has been reached
         """
          # 1. Initial nonce
-        current_nonce = 0
+        current_nonce = random.randint(0, 10000000)
         while(self.unmined_block):
             block.nonce = current_nonce
             current_hash = block.calculate_hash()
             # 2. Check if a correct nonce has been found
             if (current_hash.startswith('0' * mining_difficulty)):
-                return True
+                print('Hash found: ', current_hash[:10])
+                result = True
+                return result
             # 3. Try a different nonce
-            current_nonce += 1
+            # Try a .random() nonce each time (to avoid bias over the nodes)
+            current_nonce = random.randint(0, 10000000)
 
-        return False
+        print("Block was ⛏️  by someone else 🧑")
+        result = False
+        return result
 
     def unicast_block(self, node, block):
         """

@@ -64,6 +64,7 @@ class Block:
 
         return False
 		
+    # DEPRECATED
     def mine_block(self):
         """
         Try to find a nonce once the block capacity has been reached
