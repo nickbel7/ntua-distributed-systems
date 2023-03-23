@@ -83,13 +83,14 @@ bootstrap_node = {
 # Step 3.
 # Set the IP and PORT
 # DOCKER SPECIFIC
-# ip_address = args.ip
+ip_address = args.ip
 # IP ADDRESS
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-ip_address = s.getsockname()[0]
+if (ip_address is None):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip_address = s.getsockname()[0]
+    s.close()
 print('IP address: ', ip_address) # debug
-s.close()
 # PORT
 port = args.port
 print('PORT: ', port) # debug
@@ -115,7 +116,7 @@ else:
 
 ################## CLIENT ROUTES #####################
 
-@app.get("/create_transaction/{receiver_id}/{amount}")
+@app.get("/api/create_transaction/{receiver_id}/{amount}")
 async def create_transaction(receiver_id: int, amount: int):
     """
     Creates a new transaction given a receiver wallet and an amount
@@ -134,7 +135,7 @@ async def create_transaction(receiver_id: int, amount: int):
 
     return JSONResponse('Successful Transaction !')
 
-@app.get("/view_transactions")
+@app.get("/api/view_transactions")
 async def view_transactions():
     """
     Returns the transactions of the last validated, mined block
@@ -156,7 +157,7 @@ async def view_transactions():
 
     return JSONResponse(transactions)
 
-@app.get("/get_balance")
+@app.get("/api/get_balance")
 async def get_balance():
     """
     Gets the total balance for the given node (in NBCs)
