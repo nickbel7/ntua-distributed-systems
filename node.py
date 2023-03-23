@@ -56,7 +56,7 @@ class Node:
         self.ip = None
         self.port = None
         self.id = None
-        self.ring = []   # (id, address, pub_key, balance)
+        self.ring = {}     # address: (id, ip, port, balance) 
         self.blockchain = Blockchain()
         self.nbc = 0
         self.is_bootstrap = False
@@ -87,7 +87,7 @@ class Node:
         If current block is None, then it creates one (the genesis block)
         """
         # Pending: Validate transaction
-        
+
         print("========= NEW TRANSACTION 💵 ===========")
 
         # ==== UPDATING BLOCKCHAIN STATE ====
@@ -99,13 +99,10 @@ class Node:
             print(f"1. Transaction appended to wallet. Got : {transaction.amount} NBCs")
         
         # 2. Update the balance of sender and receiver in the ring.
-        for node in self.ring:
-            if node['address'] == transaction.sender_address:
-                node['balance'] -= transaction.amount
-            if node['address'] == transaction.receiver_address:
-                node['balance'] += transaction.amount
+        self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
+        self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
         # debug
-        print("2. Updated ring: ", self.ring)
+        print("2. Updated ring: ", self.ring.values())
 
         # ==== ADDING TRANSACTION TO BLOCK & MINING ====
 
@@ -198,7 +195,7 @@ class Node:
         """
         Broadcast the lastest mined block
         """
-        for node in self.ring:
+        for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_block(node, block)
 
@@ -222,7 +219,7 @@ class Node:
         requests.post(request_url, pickle.dumps(transaction))
         
     def broadcast_transaction(self, transaction):
-        for node in self.ring:
+        for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_transaction(node, transaction)
 
@@ -235,15 +232,12 @@ class Node:
         ! BOOTSTRAP ONLY !
         Adds a new node to the cluster
         """
-        self.ring.append(
-            {
+        self.ring[str(address)] = {
                 'id': id,
                 'ip': ip,
                 'port': port,
-                'address': address, # public key
                 'balance': balance
             }
-        )
 
     def unicast_node(self, node):
         """
@@ -280,7 +274,7 @@ class Node:
         ! BOOTSTRAP ONLY !
         Broadcast the information about the nodes to all nodes in the blockchain
         """
-        for node in self.ring:
+        for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_ring(node)
 
@@ -298,7 +292,7 @@ class Node:
         ! BOOTSTRAP ONLY !
         Broadcast the current state of the blockchain to all nodes
         """
-        for node in self.ring:
+        for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_blockchain(node)
 
@@ -308,7 +302,7 @@ class Node:
         Send the initial amount of 100 nbc to a specified node
         """
         # Create initial transaction (100 noobcoins)
-        transaction = self.create_transaction(node['address'], 100)
+        transaction = self.create_transaction(node, 100)
         transaction.calculate_hash()
 
         # Broadcast transaction to other nodes in the network
@@ -319,6 +313,6 @@ class Node:
         ! BOOTSTRAP ONLY !
         Broadcast the initial amount of 100 nbc to each node
         """
-        for node in self.ring:
-            if (self.id != node['id']):
-                self.unicast_initial_nbc(node)
+        for node_address in self.ring:
+            if (self.id != self.ring[node_address]['id']):
+                self.unicast_initial_nbc(node_address)
