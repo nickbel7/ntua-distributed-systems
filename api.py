@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, APIRouter
+from fastapi import FastAPI, Request, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -121,9 +121,11 @@ async def create_transaction(receiver_id: int, amount: int):
     """
     Creates a new transaction given a receiver wallet and an amount
     """
+    if (receiver_id >= total_nodes):
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":'Node ID does not exist'})
     # Check if there are enough NBCs
     if (node.ring[node.wallet.address]['balance'] < amount):
-        return JSONResponse({'Error: Not enough Noobcoins in wallet'})
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":'Not enough Noobcoins in wallet'})
     
     # 1. Create transaction (+ validate transaction + update UTXOs)
     receiver_address = list(node.ring.keys())[receiver_id]
@@ -133,7 +135,7 @@ async def create_transaction(receiver_id: int, amount: int):
     # 4. Broadcast transaction
     node.broadcast_transaction(transaction)
 
-    return JSONResponse('Successful Transaction !').status_code(200)
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"message":'Successful Transaction'})
 
 @app.get("/api/view_transactions")
 async def view_transactions():
@@ -148,14 +150,14 @@ async def view_transactions():
         transactions.append(
             {
                 "sender_id": node.ring[str(transaction.sender_address)]['id'],
-                "sender_address": transaction.sender_address,
+                # "sender_address": transaction.sender_address,
                 "receiver_id": node.ring[(transaction.receiver_address)]['id'],
-                "receiver_address": transaction.receiver_address,
+                # "receiver_address": transaction.receiver_address,
                 "amount": transaction.amount
             }
         )
 
-    return JSONResponse(transactions).status_code(200)
+    return JSONResponse(status_code=status.HTTP_200_OK, content=transactions)
 
 @app.get("/api/get_balance")
 async def get_balance():
@@ -165,7 +167,7 @@ async def get_balance():
     # 1. Get the NBCs attribute from the node object
     balance = node.ring[node.wallet.address]['balance']
 
-    return JSONResponse({'balance': balance}).status_code(200)
+    return JSONResponse(status_code=status.HTTP_200_OK, content={'balance': balance})
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")
