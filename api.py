@@ -133,7 +133,7 @@ async def create_transaction(receiver_id: int, amount: int):
     # 4. Broadcast transaction
     node.broadcast_transaction(transaction)
 
-    return JSONResponse('Successful Transaction !')
+    return JSONResponse('Successful Transaction !').status_code(200)
 
 @app.get("/api/view_transactions")
 async def view_transactions():
@@ -155,7 +155,7 @@ async def view_transactions():
             }
         )
 
-    return JSONResponse(transactions)
+    return JSONResponse(transactions).status_code(200)
 
 @app.get("/api/get_balance")
 async def get_balance():
@@ -165,7 +165,7 @@ async def get_balance():
     # 1. Get the NBCs attribute from the node object
     balance = node.ring[node.wallet.address]['balance']
 
-    return JSONResponse({'balance': balance})
+    return JSONResponse({'balance': balance}).status_code(200)
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")
