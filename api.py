@@ -122,11 +122,11 @@ async def create_transaction(receiver_id: int, amount: int):
     Creates a new transaction given a receiver wallet and an amount
     """
     # Check if there are enough NBCs
-    if (node.ring[node.wallet.address]['amount'] < amount):
+    if (node.ring[node.wallet.address]['balance'] < amount):
         return JSONResponse({'Error: Not enough Noobcoins in wallet'})
     
     # 1. Create transaction (+ validate transaction + update UTXOs)
-    receiver_address = node.ring.keys()[receiver_id]
+    receiver_address = list(node.ring.keys())[receiver_id]
     transaction = node.create_transaction(receiver_address, amount)
     # 3. Add to block
     node.add_transaction_to_block(transaction)
