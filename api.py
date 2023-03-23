@@ -58,6 +58,9 @@ def create_genesis_block():
 
     # 4. Add genesis block to bockchain
     node.blockchain.chain.append(gen_block)
+
+    # 5. Create new empty block
+    node.current_block = node.create_new_block()
     
     return
 
@@ -112,15 +115,24 @@ else:
 
 ################## CLIENT ROUTES #####################
 
-@app.post("/create_transaction")
-async def create_transaction():
+@app.get("/create_transaction/{receiver_id}/{amount}")
+async def create_transaction(receiver_id: int, amount: int):
     """
     Creates a new transaction given a receiver wallet and an amount
     """
+    # Check if there are enough NBCs
+    if (node.ring[node.wallet.address]['amount'] < amount):
+        return JSONResponse({'Error: Not enough Noobcoins in wallet'})
+    
     # 1. Create transaction (+ validate transaction + update UTXOs)
-    # 2. Calculate hash
+    receiver_address = node.ring.keys()[receiver_id]
+    transaction = node.create_transaction(receiver_address, amount)
     # 3. Add to block
+    node.add_transaction_to_block(transaction)
     # 4. Broadcast transaction
+    node.broadcast_transaction(transaction)
+
+    return JSONResponse('Successful Transaction !')
 
 @app.get("/view_transactions")
 async def view_transactions():
@@ -128,7 +140,21 @@ async def view_transactions():
     Returns the transactions of the last validated, mined block
     """
     # 1. Get last block in the chain
+    latest_block = node.blockchain.chain[-1]
     # 2. Return a list of transactions (sender, receiver, amount)
+    transactions = []
+    for transaction in latest_block.transactions_list:
+        transactions.append(
+            {
+                "sender_id": node.ring[transaction.sender_address]['id'],
+                "sender_address": transaction.sender_address,
+                "receiver_id": node.ring[transaction.receiver_address]['id'],
+                "receiver_address": transaction.receiver_address,
+                "amount": transaction.amount
+            }
+        )
+
+    return JSONResponse(transactions)
 
 @app.get("/get_balance")
 async def get_balance():
@@ -136,6 +162,9 @@ async def get_balance():
     Gets the total balance for the given node (in NBCs)
     """
     # 1. Get the NBCs attribute from the node object
+    balance = node.ring[node.wallet.address]['balance']
+
+    return JSONResponse({'balance': balance})
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")

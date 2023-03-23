@@ -45,7 +45,6 @@ class Node:
         id:         A number that denotes the name of the node in the cluster
         ring:       A list of all the nodes in the cluster
         blockchain: A blockchain instance from the node's perspective
-        nbc:        Amount of noobcoins the node has (for validation purposes)
         is_bootstrap:   True if the current node is the Bootstrap node
         current_block:  The block that lefts to be filled with transactions
         pending_blocks: All the blocks that are filled with transactions but are not yet mined
@@ -56,9 +55,8 @@ class Node:
         self.ip = None
         self.port = None
         self.id = None
-        self.ring = {}     # address: (id, ip, port, balance) 
+        self.ring = {}     # address: {id, ip, port, balance} 
         self.blockchain = Blockchain()
-        self.nbc = 0
         self.is_bootstrap = False
         self.current_block = None
         self.pending_blocks = deque()
@@ -74,7 +72,7 @@ class Node:
         previous_hash = None
         # Special case for GENESIS block
         if (len(self.blockchain.chain) == 0):
-            previous_hash = 0
+            previous_hash = 1
             
         self.current_block = Block(previous_hash)
         
@@ -90,7 +88,8 @@ class Node:
         print("========= NEW TRANSACTION 💵 ===========")
 
         # Validate transaction
-        if (not transaction.validate_transaction(self.ring)):
+        if ((transaction.sender_address != self.wallet.address) 
+            and (not transaction.validate_transaction(self.ring))):
             print("Transaction not valid :(")
 
         # ==== UPDATING BLOCKCHAIN STATE ====
@@ -99,7 +98,7 @@ class Node:
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
             #debug 
-            print(f"1. Transaction appended to wallet. Got : {transaction.amount} NBCs")
+            print(f"1. Transaction appended to wallet. {self.ring[transaction.sender_address]['id']} -> {self.ring[transaction.receiver_address]['id']} : {transaction.amount} NBCs")
         
         # 2. Update the balance of sender and receiver in the ring.
         self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
@@ -214,6 +213,9 @@ class Node:
         # Sign the transaction.
         transaction.sign_transaction(our_signature)
 
+        # Calculate the hash
+        transaction.calculate_hash()
+
         return transaction
     
     def unicast_transaction(self, node, transaction):
@@ -299,14 +301,16 @@ class Node:
             if (self.id != node['id']):
                 self.unicast_blockchain(node)
 
-    def unicast_initial_nbc(self, node):
+    def unicast_initial_nbc(self, node_address):
         """
         ! BOOTSTRAP ONLY !
         Send the initial amount of 100 nbc to a specified node
         """
         # Create initial transaction (100 noobcoins)
-        transaction = self.create_transaction(node, 100)
-        transaction.calculate_hash()
+        transaction = self.create_transaction(node_address, 100)
+
+        # Add transaction to block
+        self.add_transaction_to_block(transaction)
 
         # Broadcast transaction to other nodes in the network
         self.broadcast_transaction(transaction)
