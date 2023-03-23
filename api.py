@@ -203,7 +203,8 @@ async def get_transaction(request: Request):
     print("New transaction received successfully !")
 
     # Add transaction to block
-    node.add_transaction_to_block(new_transaction)
+    # node.add_transaction_to_block(new_transaction)
+    node.pending_transactions.appendleft(new_transaction)
 
 @app.post("/get_block")
 async def get_block(request: Request):
@@ -221,7 +222,8 @@ async def get_block(request: Request):
     if (new_block.validate_block(node.blockchain)):
         # If it is valid:
         # 1. Stop the current block mining
-        node.unmined_block = False
+        # node.unmined_block = False
+        node.incoming_block = True
         # 2. Add block to the blockchain
         node.blockchain.chain.append(new_block)
         print("✅📦! \nAdding it to the chain")

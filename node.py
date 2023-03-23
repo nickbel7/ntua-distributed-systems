@@ -15,6 +15,7 @@
 # !! In case of conflict, get the UTXOs from the node with the longest chain
 
 from collections import deque
+from copy import deepcopy
 from dotenv import load_dotenv
 import requests
 import pickle
@@ -27,6 +28,7 @@ from wallet import Wallet
 from blockchain import Blockchain
 from transaction import Transaction
 from block import Block
+from utxo import UTXO
 
 load_dotenv()
 block_size = int(os.getenv('BLOCK_SIZE'))
@@ -61,7 +63,9 @@ class Node:
         self.current_block = None
         self.pending_blocks = deque()
         self.is_mining = False
-        self.unmined_block = True
+        self.incoming_block = False
+        self.pending_transactions = deque()
+        self.temp_utxos = None
 
 
     ##################### MINING ###########################
@@ -129,6 +133,37 @@ class Node:
 
         return
     
+    def update_temp_utxos(self, transaction: Transaction):
+        sender_address = transaction.sender_address
+        receiver_address = transaction.receiver_address
+        amount = transaction.amount
+        sender_id = self.ring[str(sender_address)]['id']
+        receiver_id = self.ring[str(receiver_address)]['id']
+        self.temp_utxos[receiver_id].append(UTXO(sender_id, receiver_id, amount))
+        total_amount = 0
+        while(total_amount < amount):
+            temp_utxo = self.temp_utxos[sender_id].popleft()
+            total_amount += temp_utxo.amount
+        if (total_amount > amount):
+            self.temp_utxos[sender_id].append(UTXO(sender_id, sender_id, total_amount-amount))
+
+        return
+
+
+    def check_pending_transactions(self):
+        while(True):
+            if (self.pending_transactions and not self.is_mining and not self.incoming_block):
+                # Add transaction to the block
+                transaction = self.pending_transactions.pop()
+                if (transaction.validate_transaction(self.blockchain.UTXOs)):
+                    self.current_block.transactions_list.append(transaction)
+                    self.update_temp_utxos(transaction)
+                    # Check if block is full
+                    if (self.check_full_block()):
+                        mining_thread = threading.Thread(target=self.mine_process)
+                        mining_thread.start()
+
+    
     def check_full_block(self):
         """
         Checks if latest block in node is full
@@ -139,28 +174,28 @@ class Node:
             return False
 
     def mine_process(self):
-        if (self.pending_blocks and not self.is_mining):
-            # Pending: should start a new thread
-            print("========== BEGINING MINING ⛏️  ============")
-            # 1. Initialize the mining
-            self.is_mining = True
-            while(self.pending_blocks):
-                print("Number of pending blocks: ", len(self.pending_blocks))
-                # 2. Get first block in list
-                mined_block = self.pending_blocks.pop()
-                # 3. Try to find the nonce
-                is_mined_by_me = self.mine_block(mined_block)
-                # 4. Broadcast it if you found it first
-                if (is_mined_by_me):
-                    print("Block was mined by: ", self.id)
-                    self.broadcast_block(mined_block)
-                    print("Block broadcasted successfully !")
-                # 5. Reset the unmined_block flag
-                self.unmined_block = True
+        # if (self.pending_blocks and not self.is_mining):
+        # Pending: should start a new thread
+        print("========== BEGINING MINING ⛏️  ============")
+        # 1. Initialize the mining
+        self.is_mining = True
+        # while(self.pending_blocks):
+        # print("Number of pending blocks: ", len(self.pending_blocks))
+        # 2. Get first block in list
+        # mined_block = self.pending_blocks.pop()
+        # 3. Try to find the nonce
+        is_mined_by_me = self.mine_block(self.current_block)
+        # 4. Broadcast it if you found it first
+        if (is_mined_by_me):
+            print("Block was mined by: ", self.id)
+            self.broadcast_block(self.current_block)
+            print("Block broadcasted successfully !")
+            # 5. Reset the unmined_block flag
+            self.unmined_block = True
             
             # Send the is_mining flag to false
-            self.is_mining = False
-            return
+        self.is_mining = False
+        return
 
     def mine_block(self, block: Block):
         """
@@ -168,21 +203,19 @@ class Node:
         """
          # 1. Initial nonce
         current_nonce = random.randint(0, 10000000)
-        while(self.unmined_block):
+        while(not self.incoming_block):
             block.nonce = current_nonce
             current_hash = block.calculate_hash()
             # 2. Check if a correct nonce has been found
             if (current_hash.startswith('0' * mining_difficulty)):
                 print('Hash found: ', current_hash[:10])
-                result = True
-                return result
+                return True
             # 3. Try a different nonce
             # Try a .random() nonce each time (to avoid bias over the nodes)
             current_nonce = random.randint(0, 10000000)
 
         print("Block was ⛏️  by someone else 🧑")
-        result = False
-        return result
+        return False
 
     def unicast_block(self, node, block):
         """
@@ -243,6 +276,9 @@ class Node:
                 'port': port,
                 'balance': balance
             }
+        
+        # Create UTXOs for new node
+        self.blockchain.UTXOs.append(deque())
 
     def unicast_node(self, node):
         """
