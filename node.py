@@ -80,15 +80,18 @@ class Node:
         
         return self.current_block
 
-    def add_transaction_to_block(self, transaction):
+    def add_transaction_to_block(self, transaction: Transaction):
         """
         Add transaction to the block.
 
         If current block is None, then it creates one (the genesis block)
         """
-        # Pending: Validate transaction
 
         print("========= NEW TRANSACTION 💵 ===========")
+
+        # Validate transaction
+        if (not transaction.validate_transaction(self.ring)):
+            print("Transaction not valid :(")
 
         # ==== UPDATING BLOCKCHAIN STATE ====
         # 1. If the transaction is related to node, update wallet

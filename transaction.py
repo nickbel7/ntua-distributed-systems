@@ -70,7 +70,7 @@ class Transaction:
             print("❌ Transaction NOT Validated : Not valid address")
             return False
         
-        elif(ring[str(self.sender_address)]['balance']  < self.amount ):
+        elif(ring[str(self.sender_address)]['balance'] < self.amount ):
             print("❌ Transaction NOT Validated : Not enough coins")
             return False
         
