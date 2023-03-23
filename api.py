@@ -147,9 +147,9 @@ async def view_transactions():
     for transaction in latest_block.transactions_list:
         transactions.append(
             {
-                "sender_id": node.ring[transaction.sender_address]['id'],
+                "sender_id": node.ring[str(transaction.sender_address)]['id'],
                 "sender_address": transaction.sender_address,
-                "receiver_id": node.ring[transaction.receiver_address]['id'],
+                "receiver_id": node.ring[(transaction.receiver_address)]['id'],
                 "receiver_address": transaction.receiver_address,
                 "amount": transaction.amount
             }
