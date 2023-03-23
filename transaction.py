@@ -7,8 +7,6 @@ import Crypto.Random
 
 from Crypto.Hash import SHA
 from Crypto.Signature import PKCS1_v1_5
-from node import ring 
-
 class Transaction:
 
     def __init__(self, sender_address, sender_private_key, receiver_address, value):
@@ -62,7 +60,7 @@ class Transaction:
         except (ValueError, TypeError):
             return False
 
-    def validate_transaction(self):
+    def validate_transaction(self, ring):
         """
         Verify signature of sender + 
         Verify sender has enough amount to spend
@@ -70,7 +68,9 @@ class Transaction:
 
         if (not self.verify_signature):
             return False
-        elif( ring[self.sender_address]['balance']  < self.amount ):
+        elif( ring[str(self.sender_address)]['balance']  < self.amount ):
+            print("---! Transaction NOT Validated !")
             return False
         else: 
+            print("---> Transaction Validated !")
             return True

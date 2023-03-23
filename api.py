@@ -144,7 +144,7 @@ async def get_transaction(request: Request):
     """
     data = await request.body()
     new_transaction = pickle.loads(data)
-    print("New transaction received successfully !")
+    print("---> New transaction received")
 
     # Add transaction to block
     node.add_transaction_to_block(new_transaction)
@@ -185,7 +185,7 @@ async def create_transaction():
     # 3. Add to block
     # 4. Broadcast transaction
 
-@app.view("/view_transactions")
+@app.get("/view_transactions")
 async def view_transactions():
     """
     Returns the transactions of the last validated, mined block
@@ -193,7 +193,7 @@ async def view_transactions():
     # 1. Get last block in the chain
     # 2. Return a list of transactions (sender, receiver, amount)
 
-@app.view("/get_balance")
+@app.get("/get_balance")
 async def get_balance():
     """
     Gets the total balance for the given node (in NBCs)
