@@ -3,7 +3,10 @@ import os
 import time
 import argparse
 import requests
+from requests.exceptions import RequestException
 import json
+
+from texttable import Texttable
 
 ################## ARGUMENTS #####################
 argParser = argparse.ArgumentParser()
@@ -13,7 +16,7 @@ args = argParser.parse_args()
 # Address of node
 ip_address = args.ip
 port = args.port
-address= 'http://' + str(ip_address) + ':' + str(port) + '/'
+address= 'http://' + str(ip_address) + ':' + str(port) 
 
 # Command Line Interface client
 def client():
@@ -26,6 +29,7 @@ def client():
             choices= ['💸 New transaction', '📭 View last transactions', '💰 Show balance', '🌙 Exit'], 
             ),
         ]
+
         choice = inquirer.prompt(menu)['menu']
         os.system('cls||clear')
 
@@ -36,30 +40,66 @@ def client():
             ]
             answers = inquirer.prompt(questions)
             recipent = str(answers['recipent'])
-            amount = str(answers['amount'])
-                           
+            amount = str(answers['amount'])  
             print('Sending ' + amount + ' NoobCoins to client with ID ' + str(answers['recipent']) + '...')
-            time.sleep(2)
-
             try:
                 response = requests.get(address+'/api/create_transaction/'+recipent+'/'+amount)
-                print(json.loads(response))
+                data = response.json()
+                print(data)
+               
 
-            except:
-                print("Node is not available or active. Try again later.")
-                time.sleep(2)
-                
+            except requests.exceptions.HTTPError:
+                if (data):
+                    print(data)
+                else:
+                    print("Node is not active. Try again later.")
+              
+            
+            input("Press any key to go back...")
             os.system('cls||clear')
             continue
         
+
         if choice == '📭 View last transactions':
-            # call api
-            # print results
+            try:
+                response = requests.get(address+'/api/view_transactions')
+                
+                try:
+                    data = response.json()                
+                    table = Texttable()
+                    table.set_deco(Texttable.HEADER)
+                    table.set_cols_dtype(['t', 't', 't'])
+                    table.set_cols_align(["c", "c", "c"])
+                    rows = []
+                    rows.append(["Sender ID", "Receiver ID", "Amount"])
+                    for line in data:
+                        rows.append(list(line.values()))
+                    table.add_rows(rows)
+                    print(table.draw() + "\n")
+
+                except:
+                    print("Validated block not available yet. Try again later")
+                 
+
+            except requests.exceptions.HTTPError:
+                print("Node is not active. Try again later.")
+           
+
+            input("Press any key to go back...")
+            os.system('cls||clear')
             continue
         
         if choice == '💰 Show balance':
-            # call api
-            # print results
+            try:
+                response = requests.get(address+'/api/get_balance')
+                data = response.json()                
+                print(data)
+
+            except requests.exceptions.HTTPError:
+                print("Node is not active. Try again later.")
+
+            input("Press any key to go back...")
+            os.system('cls||clear')
             continue
         
         if choice == '🌙 Exit':
