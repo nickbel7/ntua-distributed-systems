@@ -7,6 +7,7 @@ import Crypto.Random
 
 from Crypto.Hash import SHA
 from Crypto.Signature import PKCS1_v1_5
+from node import ring 
 
 class Transaction:
 
@@ -66,4 +67,10 @@ class Transaction:
         Verify signature of sender + 
         Verify sender has enough amount to spend
         """
-        # if (self.verify_signature == True) #&& check UTXOs...
+
+        if (not self.verify_signature):
+            return False
+        elif( ring[self.sender_address]['balance']  < self.amount ):
+            return False
+        else: 
+            return True
