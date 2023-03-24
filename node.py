@@ -261,21 +261,19 @@ class Node:
         """
          # 1. Initial nonce
         current_nonce = random.randint(0, 10000000)
-        while(self.unmined_block):
+        while(not self.incoming_block):
             block.nonce = current_nonce
             current_hash = block.calculate_hash()
             # 2. Check if a correct nonce has been found
             if (current_hash.startswith('0' * mining_difficulty)):
                 print('Hash found: ', current_hash[:10])
-                result = True
-                return result
+                return True
             # 3. Try a different nonce
             # Try a .random() nonce each time (to avoid bias over the nodes)
             current_nonce = random.randint(0, 10000000)
 
         print("Block was ⛏️  by someone else 🧑")
-        result = False
-        return result
+        return False
 
     def unicast_block(self, node, block):
         """
