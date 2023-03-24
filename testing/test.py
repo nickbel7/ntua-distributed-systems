@@ -39,8 +39,12 @@ def send_transactions(file, addr):
 
     address= 'http://' + str(addr) + "/api/create_transaction/"
 
+    counter = 0
     with open(file, 'r') as f:
         for line in f:
+            counter+=1
+            if(counter == 10):
+                break
             line = line.split()
             receiver_id = int(line[0][2])
             amount = int(line[1])
@@ -55,6 +59,7 @@ def send_transactions(file, addr):
             except requests.exceptions.HTTPError:
                 if (data):
                     print(data)
+            time.sleep(0.5)
             
     return
 
