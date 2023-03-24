@@ -23,6 +23,7 @@ import json
 import os
 import random
 import threading
+import time
 
 from wallet import Wallet
 from blockchain import Blockchain
@@ -61,11 +62,11 @@ class Node:
         self.blockchain = Blockchain()
         self.is_bootstrap = False
         self.current_block = None
-        self.pending_blocks = deque()
+        # self.pending_blocks = deque()
         self.is_mining = False
         self.incoming_block = False
         self.pending_transactions = deque()
-        self.temp_utxos = None
+        self.temp_utxos = None  # for validation purposes
 
 
     ##################### MINING ###########################
@@ -81,6 +82,41 @@ class Node:
         self.current_block = Block(previous_hash)
         
         return self.current_block
+
+    def add_transaction_to_pending(self, transaction: Transaction):
+        """
+        """
+        # 1. Add transaction to pending list
+        self.pending_transactions.appendleft(transaction)
+
+        # Special case: after GENESIS block
+        if self.current_block is None:
+            self.current_block = self.create_new_block()
+
+        # 2. Begin mining process if node is idle
+        if (not self.is_mining):
+            mining_thread = threading.Thread(target=self.mine_process)
+            mining_thread.start()
+
+        return
+
+
+    def update_wallet_state(self, transaction: Transaction):
+        """
+        """
+        # 1. If the transaction is related to node, update wallet
+        if (transaction.receiver_address == self.wallet.address or 
+            transaction.sender_address == self.wallet.address):
+            self.wallet.transactions.append(transaction)
+            #debug 
+            print(f"1. Transaction appended to wallet. {self.ring[transaction.sender_address]['id']} -> {self.ring[transaction.receiver_address]['id']} : {transaction.amount} NBCs")
+        
+        # 2. Update the balance of sender and receiver in the ring.
+        self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
+        self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
+        # debug
+        print("2. Updated ring: ", self.ring.values())
+        return
 
     def add_transaction_to_block(self, transaction: Transaction):
         """
@@ -133,13 +169,32 @@ class Node:
 
         return
     
-    def update_temp_utxos(self, transaction: Transaction):
+    def update_original_utxos(self, transaction: Transaction):
         sender_address = transaction.sender_address
         receiver_address = transaction.receiver_address
         amount = transaction.amount
         sender_id = self.ring[str(sender_address)]['id']
         receiver_id = self.ring[str(receiver_address)]['id']
+        self.blockchain.UTXOs[receiver_id].append(UTXO(sender_id, receiver_id, amount))
+        total_amount = 0
+        while(total_amount < amount):
+            temp_utxo = self.blockchain.UTXOs[sender_id].popleft()
+            total_amount += temp_utxo.amount
+        if (total_amount > amount):
+            self.blockchain.UTXOs[sender_id].append(UTXO(sender_id, sender_id, total_amount-amount))
+
+        return
+    
+    def update_temp_utxos(self, transaction: Transaction):
+        # UTXO attributes
+        sender_address = transaction.sender_address
+        receiver_address = transaction.receiver_address
+        amount = transaction.amount
+        sender_id = self.ring[str(sender_address)]['id']
+        receiver_id = self.ring[str(receiver_address)]['id']
+        # Update receiver UTXOs
         self.temp_utxos[receiver_id].append(UTXO(sender_id, receiver_id, amount))
+        # Update sender UTXOs
         total_amount = 0
         while(total_amount < amount):
             temp_utxo = self.temp_utxos[sender_id].popleft()
@@ -149,20 +204,20 @@ class Node:
 
         return
 
-
-    def check_pending_transactions(self):
-        while(True):
-            if (self.pending_transactions and not self.is_mining and not self.incoming_block):
-                # Add transaction to the block
-                transaction = self.pending_transactions.pop()
-                if (transaction.validate_transaction(self.blockchain.UTXOs)):
-                    self.current_block.transactions_list.append(transaction)
-                    self.update_temp_utxos(transaction)
-                    # Check if block is full
-                    if (self.check_full_block()):
-                        mining_thread = threading.Thread(target=self.mine_process)
-                        mining_thread.start()
-
+    # DEPRECATED
+    # def check_pending_transactions(self):
+        # while(True):
+        #     if (self.pending_transactions and not self.is_mining and not self.incoming_block):
+        #         # Add transaction to the block
+        #         transaction = self.pending_transactions.pop()
+        #         if (transaction.validate_transaction(self.blockchain.UTXOs)):
+        #             self.current_block.transactions_list.append(transaction)
+        #             self.update_temp_utxos(transaction)
+        #             # Check if block is full
+        #             if (self.check_full_block()):
+        #                 mining_thread = threading.Thread(target=self.mine_process)
+        #                 mining_thread.start()
+        # return
     
     def check_full_block(self):
         """
@@ -176,7 +231,6 @@ class Node:
     def mine_process(self):
         # if (self.pending_blocks and not self.is_mining):
         # Pending: should start a new thread
-        print("========== BEGINING MINING ⛏️  ============")
         # 1. Initialize the mining
         self.is_mining = True
         # while(self.pending_blocks):
@@ -184,18 +238,77 @@ class Node:
         # 2. Get first block in list
         # mined_block = self.pending_blocks.pop()
         # 3. Try to find the nonce
-        is_mined_by_me = self.mine_block(self.current_block)
-        # 4. Broadcast it if you found it first
-        if (is_mined_by_me):
-            print("Block was mined by: ", self.id)
-            self.broadcast_block(self.current_block)
-            print("Block broadcasted successfully !")
-            # 5. Reset the unmined_block flag
-            self.unmined_block = True
-            
-            # Send the is_mining flag to false
+        while (self.pending_transactions):
+            transaction = self.pending_transactions.pop()
+            if (transaction.validate_transaction(self.blockchain.UTXOs)):
+                # Add transaction to the block
+                self.current_block.transactions_list.append(transaction)
+                self.update_temp_utxos(transaction)
+                if (self.check_full_block()):
+                    print("========== BEGINING MINING ⛏️  ============")
+                    # 1. Mine current_block
+                    is_mined_by_me = self.mine_block(self.current_block)
+                    # 4. Broadcast it if you found it first
+                    if (is_mined_by_me):
+                        print("Block was mined by: ", self.id)
+                        # Add block to originanl chain (assuming it has been validated)
+                        self.blockchain.chain.append(self.current_block)
+                        for transaction in self.current_block.transactions_list:
+                            self.update_wallet_state(transaction)
+                            self.blockchain.UTXOs = self.temp_utxos
+
+                        self.broadcast_block(self.current_block)
+
+                        print("Block broadcasted successfully !")
+                    else:
+                        # Synchronize blockchain
+                        # time.sleep(1)
+                        while(self.incoming_block):
+                            # time.sleep()
+                            continue
+                        # 5. Reset the incoming_block flag
+                        # self.incoming_block = False
+                        
+                    # Create a new block
+                    self.current_block = self.create_new_block()        
+                
+        # Send the is_mining flag to false
         self.is_mining = False
         return
+
+    def update_pending_transactions(self, incoming_block: Block):
+        # 1. Add transactions of current_block to pending_transactions list
+        for transaction in self.current_block.transactions_list:
+            self.pending_transactions.append(transaction)
+        # 2. Remove from pending_transactions all transactions included in the incoming_block
+        for incoming_transaction in incoming_block.transactions_list:
+            index = 0
+            while index < len(self.pending_transactions):
+                pending_transaction = self.pending_transactions[index]
+                if (pending_transaction.transaction_id == incoming_transaction.transaction_id):
+                    self.pending_transactions.remove(pending_transaction)
+                else:
+                    index += 1
+
+        return
+
+    def add_block_to_chain(self, block: Block):
+        # Add block to originanl chain (assuming it has been validated)
+        self.blockchain.chain.append(block)
+        # Update UTXOs and wallet accordingly
+        for transaction in block.transactions_list:
+            self.update_original_utxos(transaction)
+            self.update_wallet_state(transaction)
+        # Reset temp_utxos
+        self.temp_utxos = deepcopy(self.blockchain.UTXOs)
+        # Update pending_transactions list
+        self.update_pending_transactions(block)
+
+        # Update incoming_block flag
+        self.incoming_block = False
+        # mined: [1, 2, 4]
+        # current: [2, 3]
+        # pending: [2, 3, 1, 4]
 
     def mine_block(self, block: Block):
         """
@@ -280,6 +393,8 @@ class Node:
         # Create UTXOs for new node
         self.blockchain.UTXOs.append(deque())
 
+        return
+
     def unicast_node(self, node):
         """
         Sends information about self to the bootstrap node
@@ -298,6 +413,8 @@ class Node:
             print('My ID is: ', self.id)
         else:
             print("Initiallization failed")
+
+        return
     
     def unicast_ring(self, node):
         """
@@ -333,6 +450,9 @@ class Node:
         ! BOOTSTRAP ONLY !
         Broadcast the current state of the blockchain to all nodes
         """
+        # Create a copy of original UTXOs
+        self.temp_utxos = deepcopy(self.blockchain.UTXOs)
+        
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_blockchain(node)
@@ -346,7 +466,8 @@ class Node:
         transaction = self.create_transaction(node_address, 100)
 
         # Add transaction to block
-        self.add_transaction_to_block(transaction)
+        # self.add_transaction_to_block(transaction)
+        self.add_transaction_to_pending(transaction)
 
         # Broadcast transaction to other nodes in the network
         self.broadcast_transaction(transaction)

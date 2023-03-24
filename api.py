@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request, APIRouter
+from fastapi import FastAPI, Request, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from copy import deepcopy
 import os
 import socket
 import json
@@ -14,6 +15,7 @@ import requests
 
 from node import Node
 from transaction import Transaction
+from utxo import UTXO
 
 app = FastAPI()
 # app = APIRouter()
@@ -59,7 +61,10 @@ def create_genesis_block():
     # 4. Add genesis block to bockchain
     node.blockchain.chain.append(gen_block)
 
-    # 5. Create new empty block
+    # 5. Add first UTXO
+    node.blockchain.UTXOs[0].append(UTXO(-1, node.id, total_nbc))
+
+    # 6. Create new empty block
     node.current_block = node.create_new_block()
     
     return
@@ -122,6 +127,7 @@ async def create_transaction(receiver_id: int, amount: int):
     Creates a new transaction given a receiver wallet and an amount
     """
     # Check if there are enough NBCs
+    # !! Only for cli demo
     if (node.ring[node.wallet.address]['balance'] < amount):
         return JSONResponse({'Error: Not enough Noobcoins in wallet'})
     
@@ -129,11 +135,12 @@ async def create_transaction(receiver_id: int, amount: int):
     receiver_address = list(node.ring.keys())[receiver_id]
     transaction = node.create_transaction(receiver_address, amount)
     # 3. Add to block
-    node.add_transaction_to_block(transaction)
+    # node.add_transaction_to_block(transaction)
+    node.add_transaction_to_pending(transaction)
     # 4. Broadcast transaction
     node.broadcast_transaction(transaction)
 
-    return JSONResponse('Successful Transaction !').status_code(200)
+    return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_transactions")
 async def view_transactions():
@@ -155,7 +162,7 @@ async def view_transactions():
             }
         )
 
-    return JSONResponse(transactions).status_code(200)
+    return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_balance")
 async def get_balance():
@@ -165,7 +172,7 @@ async def get_balance():
     # 1. Get the NBCs attribute from the node object
     balance = node.ring[node.wallet.address]['balance']
 
-    return JSONResponse({'balance': balance}).status_code(200)
+    return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")
@@ -190,6 +197,7 @@ async def get_blockchain(request: Request):
     """
     data = await request.body()
     node.blockchain = pickle.loads(data)
+    node.temp_utxos = deepcopy(node.blockchain.UTXOs)
 
     print("Blockchain received successfully !")
 
@@ -204,7 +212,7 @@ async def get_transaction(request: Request):
 
     # Add transaction to block
     # node.add_transaction_to_block(new_transaction)
-    node.pending_transactions.appendleft(new_transaction)
+    node.add_transaction_to_pending(new_transaction)
 
 @app.post("/get_block")
 async def get_block(request: Request):
@@ -225,7 +233,8 @@ async def get_block(request: Request):
         # node.unmined_block = False
         node.incoming_block = True
         # 2. Add block to the blockchain
-        node.blockchain.chain.append(new_block)
+        # node.blockchain.chain.append(new_block)
+        node.add_block_to_chain(new_block)
         print("✅📦! \nAdding it to the chain")
         print("Blockchain length: ", len(node.blockchain.chain))
     else:

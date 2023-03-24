@@ -63,7 +63,7 @@ class Transaction:
         except (ValueError, TypeError):
             return False
 
-    def validate_transaction(self, ring):
+    def validate_transaction(self, UTXOS):
         """
         Verify signature of sender + 
         Verify sender has enough amount to spend
@@ -72,9 +72,9 @@ class Transaction:
             print("❌ Transaction NOT Validated : Not valid address")
             return False
         
-        elif(ring[str(self.sender_address)]['balance'] < self.amount ):
-            print("❌ Transaction NOT Validated : Not enough coins")
-            return False
+        # elif(ring[str(self.sender_address)]['balance'] < self.amount ):
+        #     print("❌ Transaction NOT Validated : Not enough coins")
+        #     return False
         
         else: 
             print("✅ Transaction Validated !")
