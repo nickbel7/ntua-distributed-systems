@@ -22,13 +22,6 @@ class Wallet:
 		self.address = key.publickey().exportKey().decode('ISO-8859-1')
 		self.transactions = []
 
-	def balance():
-		"""
-	    Get the total wallet balance
-		"""
-		#...
-		# Calculate the sum of all UTXOs
-
 # Testing
 # new_wallet = Wallet()
 # print(new_wallet.private_key.export_key().decode())

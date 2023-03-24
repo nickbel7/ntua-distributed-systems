@@ -48,6 +48,7 @@ class Transaction:
         """
         Sign transaction with private key
         """
+        # Pending: fix this !!
         # self.signature = PKCS1_v1_5.new(rsa_key=private_key).sign(self)
         return
     
@@ -56,12 +57,13 @@ class Transaction:
         Verify signature of sender (private, public keys)
         """
         try:
+            # Pending: fix this !!
             # PKCS1_v1_5.new(self.sender_address).verify(self.transaction_id, self.signature)
             return True
         except (ValueError, TypeError):
             return False
 
-    def validate_transaction(self, ring):
+    def validate_transaction(self, UTXOS):
         """
         Verify signature of sender + 
         Verify sender has enough amount to spend
@@ -70,9 +72,9 @@ class Transaction:
             print("❌ Transaction NOT Validated : Not valid address")
             return False
         
-        elif(ring[str(self.sender_address)]['balance'] < self.amount ):
-            print("❌ Transaction NOT Validated : Not enough coins")
-            return False
+        # elif(ring[str(self.sender_address)]['balance'] < self.amount ):
+        #     print("❌ Transaction NOT Validated : Not enough coins")
+        #     return False
         
         else: 
             print("✅ Transaction Validated !")

@@ -63,21 +63,3 @@ class Block:
             return True
 
         return False
-		
-    # DEPRECATED
-    def mine_block(self):
-        """
-        Try to find a nonce once the block capacity has been reached
-        """
-         # 1. Initial nonce
-        current_nonce = 0
-        while(True):
-            self.nonce = current_nonce
-            current_hash = self.calculate_hash()
-            # 2. Check if a correct nonce has been found
-            if (current_hash.startswith('0' * mining_difficulty)):
-                return current_hash
-            # 3. Try a different nonce
-            current_nonce += 1
-
-        return None

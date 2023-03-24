@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from copy import deepcopy
 import os
 import socket
 import json
@@ -14,6 +15,7 @@ import requests
 
 from node import Node
 from transaction import Transaction
+from utxo import UTXO
 
 app = FastAPI()
 # app = APIRouter()
@@ -59,7 +61,10 @@ def create_genesis_block():
     # 4. Add genesis block to bockchain
     node.blockchain.chain.append(gen_block)
 
-    # 5. Create new empty block
+    # 5. Add first UTXO
+    node.blockchain.UTXOs[0].append(UTXO(-1, node.id, total_nbc))
+
+    # 6. Create new empty block
     node.current_block = node.create_new_block()
     
     return
@@ -123,19 +128,21 @@ async def create_transaction(receiver_id: int, amount: int):
     """
     if (receiver_id >= total_nodes):
         return JSONResponse({"message":'Node ID does not exist'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
     # Check if there are enough NBCs
+    # !! Only for cli demo
     if (node.ring[node.wallet.address]['balance'] < amount):
         return JSONResponse(content={"message":'Not enough Noobcoins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
     
-    # 1. Create transaction (+ validate transaction + update UTXOs)
+    # 1. Create transaction
     receiver_address = list(node.ring.keys())[receiver_id]
     transaction = node.create_transaction(receiver_address, amount)
-    # 3. Add to block
-    node.add_transaction_to_block(transaction)
+    # 3. Add to pending transactions list
+    node.add_transaction_to_pending(transaction)
     # 4. Broadcast transaction
     node.broadcast_transaction(transaction)
 
-    return JSONResponse({"message":'Successful Transaction'}, status_code=status.HTTP_200_OK)
+    return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_transactions")
 async def view_transactions():
@@ -149,10 +156,10 @@ async def view_transactions():
     for transaction in latest_block.transactions_list:
         transactions.append(
             {
-                "sender_id": node.ring[str(transaction.sender_address)]['id'],
-                # "sender_address": transaction.sender_address,
-                "receiver_id": node.ring[(transaction.receiver_address)]['id'],
-                # "receiver_address": transaction.receiver_address,
+                "sender_id": node.ring[transaction.sender_address]['id'],
+                "sender_address": transaction.sender_address,
+                "receiver_id": node.ring[transaction.receiver_address]['id'],
+                "receiver_address": transaction.receiver_address,
                 "amount": transaction.amount
             }
         )
@@ -192,6 +199,7 @@ async def get_blockchain(request: Request):
     """
     data = await request.body()
     node.blockchain = pickle.loads(data)
+    node.temp_utxos = deepcopy(node.blockchain.UTXOs)
 
     print("Blockchain received successfully !")
 
@@ -205,7 +213,7 @@ async def get_transaction(request: Request):
     print("New transaction received successfully !")
 
     # Add transaction to block
-    node.add_transaction_to_block(new_transaction)
+    node.add_transaction_to_pending(new_transaction)
 
 @app.post("/get_block")
 async def get_block(request: Request):
@@ -223,9 +231,9 @@ async def get_block(request: Request):
     if (new_block.validate_block(node.blockchain)):
         # If it is valid:
         # 1. Stop the current block mining
-        node.unmined_block = False
+        node.incoming_block = True
         # 2. Add block to the blockchain
-        node.blockchain.chain.append(new_block)
+        node.add_block_to_chain(new_block)
         print("✅📦! \nAdding it to the chain")
         print("Blockchain length: ", len(node.blockchain.chain))
     else:
@@ -270,4 +278,3 @@ def check_full_ring():
         
 ################## WEBSERVER #####################
 uvicorn.run(app, host="0.0.0.0", port=port)
-

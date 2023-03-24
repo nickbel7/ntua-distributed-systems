@@ -47,14 +47,14 @@ def send_transactions(file, addr):
 
             print(address+str(receiver_id)+'/'+str(amount))
 
-            # try:
-            #         response = requests.get(address+str(receiver_id)+'/'+str(amount))
-            #         data = response.json()
-            #         print(data)
+            try:
+                response = requests.get(address+str(receiver_id)+'/'+str(amount))
+                data = response.json()
+                print(data)
                 
-            # except requests.exceptions.HTTPError:
-            #     if (data):
-            #         print(data)
+            except requests.exceptions.HTTPError:
+                if (data):
+                    print(data)
             
     return
 
