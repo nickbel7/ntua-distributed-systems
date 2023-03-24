@@ -50,6 +50,7 @@ class Blockchain:
         """
         Get the correct version of the blockchain when you cannot validate a block
         """
+        print("☠️ FOUND CONFLICT: Initializing Resolve Conflict Method")
         # 1. initialize list to hold the len of the chains 
         chain_lens = []
         # 2. Send request to all nodes to send back the current len of the blockchain 
@@ -67,25 +68,18 @@ class Blockchain:
         
         # 3. find node wit longest chain
         max_len_index = chain_lens.index(max(chain_lens))
+        print("🫥 YOUR CHOICES WERE", chain_lens)
+        print("👌 FOUND LONGEST CHAIN: Node, ", max_len_index)
         if (max_len_index ==  node.id):
+             print("😁 LONGEST CHAIN WAS MINE")
              return 
         else:
         # 4. send request to get the chain & utxos from the node
             request_url = request_address + '/api/get_chain'
             response_data = requests.get(request_url)
             response_chain = pickle.loads(response_data.content)
-        #     response_chain = json.loads(response_data)     
-        #     new_chain = Blockchain()
-        #     # # Comment: Debugging 
-        #     # print("RESPONSE CHAIN: ", response_chain.keys())
-        #     new_chain.chain = response_chain['chain']
-        #     new_chain.difficulty = response_chain['difficulty']
-        #    # new_chain.maxBlockTransactions = response_chain['maxBlockTransactions']
-        #     new_chain.minimumTransaction = response_chain['minimumTransaction']
-        #     new_chain.UTXOs = [deque(i) for i in response_chain['UTXOs']]
-            
+            print("😒 HAD TO CHANGE CHAIN")
             node.blockchain = response_chain
-            print("------------DEBUG NEW BLOCKCHAIN---------------", node.blockchain)
             return
 
      # Comment: UTXOs is passed as parameter cause we might use temp_utxos

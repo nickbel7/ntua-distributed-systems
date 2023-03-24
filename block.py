@@ -27,6 +27,24 @@ class Block:
         self.nonce = None
         self.transactions_list = []
 	
+    # def __dict__(self):
+    #     return {
+    #         "previous_hash": self.previous_hash,
+    #         "timestamp": self.timestamp,
+    #         "hash": self.hash,
+    #         "nonce": self.nonce,
+    #         "transactions_list": self.transactions_list,
+    #     }
+    
+    # def __json__(self):
+    #     return {
+    #         'previous_hash': self.previous_hash,
+    #         'timestamp': self.timestamp,
+    #         'hash': self.hash,
+    #         'nonce': self.nonce,
+    #         'transactions_list': self.transactions_list
+    #     }
+    
     def calculate_hash(self):
         """
         Return hash of the block
@@ -50,18 +68,24 @@ class Block:
         Checks 1)if current_hash is correct
                2)if the previous_hash field is equal to the the hash of the actual previous block
         """
+        # Comment: deleted this
         # Special case: If it is the genesis block, it's valid 
-        if (self.previous_hash == 0 and self.nonce == 0):
-            return True
+        # if (self.previous_hash == 0 and self.nonce == 0):
+        #     return True
         
         # Get last block of the chain and check its hash
         prev_block = blockchain.chain[-1]
-        if ((self.previous_hash == prev_block.hash)
+        if ((str(self.previous_hash) == str(prev_block.hash))
             and (self.hash.startswith('0' * blockchain.difficulty))):
             # debug
-            print('Block validated !')
+            print(' 🆗 Block validated !')
             return True
-
+        else:  
+            print("🤦‍♀️ Hash of received block is ", self.hash)
+            print("🤦‍♀️ Prev Hash of new Block is ", self.previous_hash, type(self.previous_hash))
+            print("🤦‍♀️ Actual Prev Hash is ", prev_block.hash, type(prev_block.hash))
+            print("🤦‍♀️ Condition 1 ", self.previous_hash == prev_block.hash)
+            print("🤦‍♀️ Condition 2 ", self.hash.startswith('0' * blockchain.difficulty))
         return False
 		
     # DEPRECATED

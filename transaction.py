@@ -88,6 +88,7 @@ class Transaction:
         #
         elif( Blockchain.wallet_balance(id, UTXOS) < self.amount ):
             print("❌ Transaction NOT Validated : Not enough coins")
+            print("❌", Blockchain.wallet_balance(id, UTXOS), self.amount)
             return False
         
         else: 

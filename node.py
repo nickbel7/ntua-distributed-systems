@@ -262,6 +262,8 @@ class Node:
                         for transaction in self.current_block.transactions_list:
                             self.update_wallet_state(transaction)
                             self.blockchain.UTXOs = self.temp_utxos
+                           
+                            
 
                         self.broadcast_block(self.current_block)
 
@@ -324,6 +326,8 @@ class Node:
         current_nonce = random.randint(0, 10000000)
         while(not self.incoming_block):
             block.nonce = current_nonce
+             # Comment: CORRECTION: 
+            block.previous_hash = self.blockchain.chain[-1].hash
             current_hash = block.calculate_hash()
             # 2. Check if a correct nonce has been found
             if (current_hash.startswith('0' * mining_difficulty)):

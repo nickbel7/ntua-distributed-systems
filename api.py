@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from dotenv import load_dotenv
 from copy import deepcopy
 import os
@@ -179,22 +179,20 @@ async def get_balance():
 @app.get("/api/get_chain_length")
 async def get_chain_length():
     """
-    Gets the total balance for the given node (in NBCs)
+    Gets the current valid blockchain length of the receiver
     """
     # 1. Get the current length of the node's blockchain
     chain_len = len(node.blockchain.chain)
 
     return JSONResponse({'chain_length': chain_len}, status_code=status.HTTP_200_OK)
 
-@app.get("/api/get_blockchain")
-async def get_blockchain():
+@app.get("/api/get_chain")
+async def get_chain():
     """
-    Gets the total balance for the given node (in NBCs)
+    Gets the current valid blockchain of the receiver
     """
     # 1. Get the current length of the node's blockchain
-    chain = node.blockchain.chain
-
-    return JSONResponse({'blockchain': chain}, status_code=status.HTTP_200_OK)
+    return Response(pickle.dumps(node.blockchain), status_code=status.HTTP_200_OK)
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")
@@ -247,8 +245,10 @@ async def get_block(request: Request):
 
     # Pending: implement logic when receiving a block
     # 1. Check validity of block
-    previous_hash = node.blockchain.chain[-1].hash
-    new_block.previous_hash = previous_hash 
+    # Comment: debug
+    #print("DEBUGGING: ", node.blockchain.chain[-1])
+    # previous_hash = node.blockchain.chain[-1].hash
+    # new_block.previous_hash = previous_hash 
     if (new_block.validate_block(node.blockchain)):
         # If it is valid:
         # 1. Stop the current block mining
@@ -301,5 +301,8 @@ def check_full_ring():
         node.broadcast_blockchain()
         node.broadcast_initial_nbc()
         
+
 ################## WEBSERVER #####################
 uvicorn.run(app, host="0.0.0.0", port=port)
+
+
