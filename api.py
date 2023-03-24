@@ -254,14 +254,14 @@ def get_block(data: bytes = Depends(get_body)):
     return JSONResponse('OK')
 
 @app.post("/let_me_in")
-def let_me_in(request: Request):
+async def let_me_in(request: Request):
     #https://i.imgflip.com/2u5y6a.png?a466200
     """
     ! BOOTSTRAP ONLY !
     Adds a new node to the cluster
     """
     # Get the parameters
-    data = request.form()
+    data = await request.form()
     ip = data.get('ip')
     port = data.get('port')
     address = data.get('address')
