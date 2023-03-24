@@ -4,3 +4,4 @@ pycryptodome
 requests
 python-dotenv
 python-multipart
+inquirer

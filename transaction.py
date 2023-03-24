@@ -7,6 +7,7 @@ import Crypto.Random
 
 from Crypto.Hash import SHA
 from Crypto.Signature import PKCS1_v1_5
+from blockchain import Blockchain
 
 class Transaction:
 
@@ -48,6 +49,7 @@ class Transaction:
         """
         Sign transaction with private key
         """
+        # Pending: fix this !!
         # self.signature = PKCS1_v1_5.new(rsa_key=private_key).sign(self)
         return
     
@@ -56,21 +58,24 @@ class Transaction:
         Verify signature of sender (private, public keys)
         """
         try:
+            # Pending: fix this !!
             # PKCS1_v1_5.new(self.sender_address).verify(self.transaction_id, self.signature)
             return True
         except (ValueError, TypeError):
             return False
 
-    def validate_transaction(self, ring):
+    #node.ring[str(self.sender_address)]['id']
+    def validate_transaction(self, id, UTXOS):
         """
         Verify signature of sender + 
         Verify sender has enough amount to spend
         """
+        # Comment: DEPRACATED? 
         if (not self.verify_signature()):
             print("❌ Transaction NOT Validated : Not valid address")
             return False
-        
-        elif(ring[str(self.sender_address)]['balance'] < self.amount ):
+        #
+        elif( Blockchain.wallet_balance(id, UTXOS) < self.amount ):
             print("❌ Transaction NOT Validated : Not enough coins")
             return False
         

@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request, APIRouter
+from fastapi import FastAPI, Request, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from copy import deepcopy
 import os
 import socket
 import json
@@ -14,6 +15,8 @@ import requests
 
 from node import Node
 from transaction import Transaction
+from utxo import UTXO
+from blockchain import Blockchain
 
 app = FastAPI()
 # app = APIRouter()
@@ -59,7 +62,10 @@ def create_genesis_block():
     # 4. Add genesis block to bockchain
     node.blockchain.chain.append(gen_block)
 
-    # 5. Create new empty block
+    # 5. Add first UTXO
+    node.blockchain.UTXOs[0].append(UTXO(-1, node.id, total_nbc))
+
+    # 6. Create new empty block
     node.current_block = node.create_new_block()
     
     return
@@ -83,13 +89,14 @@ bootstrap_node = {
 # Step 3.
 # Set the IP and PORT
 # DOCKER SPECIFIC
-# ip_address = args.ip
+ip_address = args.ip
 # IP ADDRESS
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-ip_address = s.getsockname()[0]
+if (ip_address is None):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip_address = s.getsockname()[0]
+    s.close()
 print('IP address: ', ip_address) # debug
-s.close()
 # PORT
 port = args.port
 print('PORT: ', port) # debug
@@ -115,26 +122,29 @@ else:
 
 ################## CLIENT ROUTES #####################
 
-@app.get("/create_transaction/{receiver_id}/{amount}")
+@app.get("/api/create_transaction/{receiver_id}/{amount}")
 async def create_transaction(receiver_id: int, amount: int):
     """
     Creates a new transaction given a receiver wallet and an amount
     """
     # Check if there are enough NBCs
-    if (node.ring[node.wallet.address]['amount'] < amount):
-        return JSONResponse({'Error: Not enough Noobcoins in wallet'})
+    # !! Only for cli demo
+    # Comment: fix be JSON serializable
+    if (node.ring[node.wallet.address]['balance'] < amount):
+        return JSONResponse({'Error': 'Not enough Noobcoins in wallet'})
     
     # 1. Create transaction (+ validate transaction + update UTXOs)
-    receiver_address = node.ring.keys()[receiver_id]
+    receiver_address = list(node.ring.keys())[receiver_id]
     transaction = node.create_transaction(receiver_address, amount)
     # 3. Add to block
-    node.add_transaction_to_block(transaction)
+    # node.add_transaction_to_block(transaction)
+    node.add_transaction_to_pending(transaction)
     # 4. Broadcast transaction
     node.broadcast_transaction(transaction)
 
-    return JSONResponse('Successful Transaction !')
+    return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 
-@app.get("/view_transactions")
+@app.get("/api/view_transactions")
 async def view_transactions():
     """
     Returns the transactions of the last validated, mined block
@@ -154,9 +164,9 @@ async def view_transactions():
             }
         )
 
-    return JSONResponse(transactions)
+    return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
-@app.get("/get_balance")
+@app.get("/api/get_balance")
 async def get_balance():
     """
     Gets the total balance for the given node (in NBCs)
@@ -164,7 +174,27 @@ async def get_balance():
     # 1. Get the NBCs attribute from the node object
     balance = node.ring[node.wallet.address]['balance']
 
-    return JSONResponse({'balance': balance})
+    return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
+
+@app.get("/api/get_chain_length")
+async def get_chain_length():
+    """
+    Gets the total balance for the given node (in NBCs)
+    """
+    # 1. Get the current length of the node's blockchain
+    chain_len = len(node.blockchain.chain)
+
+    return JSONResponse({'chain_length': chain_len}, status_code=status.HTTP_200_OK)
+
+@app.get("/api/get_blockchain")
+async def get_blockchain():
+    """
+    Gets the total balance for the given node (in NBCs)
+    """
+    # 1. Get the current length of the node's blockchain
+    chain = node.blockchain.chain
+
+    return JSONResponse({'blockchain': chain}, status_code=status.HTTP_200_OK)
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")
@@ -189,6 +219,7 @@ async def get_blockchain(request: Request):
     """
     data = await request.body()
     node.blockchain = pickle.loads(data)
+    node.temp_utxos = deepcopy(node.blockchain.UTXOs)
 
     print("Blockchain received successfully !")
 
@@ -202,7 +233,8 @@ async def get_transaction(request: Request):
     print("New transaction received successfully !")
 
     # Add transaction to block
-    node.add_transaction_to_block(new_transaction)
+    # node.add_transaction_to_block(new_transaction)
+    node.add_transaction_to_pending(new_transaction)
 
 @app.post("/get_block")
 async def get_block(request: Request):
@@ -220,12 +252,16 @@ async def get_block(request: Request):
     if (new_block.validate_block(node.blockchain)):
         # If it is valid:
         # 1. Stop the current block mining
-        node.unmined_block = False
+        # node.unmined_block = False
+        node.incoming_block = True
         # 2. Add block to the blockchain
-        node.blockchain.chain.append(new_block)
+        # node.blockchain.chain.append(new_block)
+        node.add_block_to_chain(new_block)
         print("✅📦! \nAdding it to the chain")
         print("Blockchain length: ", len(node.blockchain.chain))
     else:
+        # Comment: implemented resolve conflict logic
+        Blockchain.resolve_conflict(node)
         print("❌📦 Something went wrong with validation :(")
 
     return JSONResponse('OK')
@@ -267,4 +303,3 @@ def check_full_ring():
         
 ################## WEBSERVER #####################
 uvicorn.run(app, host="0.0.0.0", port=port)
-
