@@ -284,6 +284,7 @@ def check_full_ring():
     """
     time.sleep(2)
     if (len(node.ring) == total_nodes):
+        print("====== ‼️‼️ BEGIN BOOTSTRAPING ‼️‼️ =======")
         node.broadcast_ring()
         node.broadcast_blockchain()
         node.broadcast_initial_nbc()

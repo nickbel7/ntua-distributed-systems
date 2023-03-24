@@ -183,6 +183,7 @@ class Node:
         self.is_mining = True
         # 2. Check if there are any transactions waiting
         while (self.pending_transactions):
+            print("PENDING TRANSACTIONS: ", [(self.ring[str(trans.sender_address)]['id'], self.ring[str(trans.receiver_address)], trans.amount) for trans in self.pending_transactions])
             print("Number of pending transactions: ", len(self.pending_transactions))
             # 3. Get the available transaction
             transaction = self.pending_transactions.pop()
@@ -416,7 +417,7 @@ class Node:
 
         # Add transaction to pending list
         self.add_transaction_to_pending(transaction)
-
+        print("===== SEND 100 NBCs =======")
         # Broadcast transaction to other nodes in the network
         self.broadcast_transaction(transaction)
     
