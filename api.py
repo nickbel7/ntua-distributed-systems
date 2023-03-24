@@ -122,10 +122,10 @@ async def create_transaction(receiver_id: int, amount: int):
     Creates a new transaction given a receiver wallet and an amount
     """
     if (receiver_id >= total_nodes):
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":'Node ID does not exist'})
+        return JSONResponse({"message":'Node ID does not exist'}, status_code=status.HTTP_400_BAD_REQUEST)
     # Check if there are enough NBCs
     if (node.ring[node.wallet.address]['balance'] < amount):
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":'Not enough Noobcoins in wallet'})
+        return JSONResponse(content={"message":'Not enough Noobcoins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
     
     # 1. Create transaction (+ validate transaction + update UTXOs)
     receiver_address = list(node.ring.keys())[receiver_id]
@@ -135,7 +135,7 @@ async def create_transaction(receiver_id: int, amount: int):
     # 4. Broadcast transaction
     node.broadcast_transaction(transaction)
 
-    return JSONResponse(status_code=status.HTTP_200_OK, content={"message":'Successful Transaction'})
+    return JSONResponse({"message":'Successful Transaction'}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_transactions")
 async def view_transactions():
@@ -157,7 +157,7 @@ async def view_transactions():
             }
         )
 
-    return JSONResponse(status_code=status.HTTP_200_OK, content=transactions)
+    return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_balance")
 async def get_balance():
@@ -167,7 +167,7 @@ async def get_balance():
     # 1. Get the NBCs attribute from the node object
     balance = node.ring[node.wallet.address]['balance']
 
-    return JSONResponse(status_code=status.HTTP_200_OK, content={'balance': balance})
+    return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")
