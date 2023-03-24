@@ -126,16 +126,18 @@ async def create_transaction(receiver_id: int, amount: int):
     """
     Creates a new transaction given a receiver wallet and an amount
     """
+    if (receiver_id >= total_nodes):
+        return JSONResponse({"message":'Node ID does not exist'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
     # Check if there are enough NBCs
     # !! Only for cli demo
     if (node.ring[node.wallet.address]['balance'] < amount):
-        return JSONResponse({'Error: Not enough Noobcoins in wallet'})
+        return JSONResponse(content={"message":'Not enough Noobcoins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
     
-    # 1. Create transaction (+ validate transaction + update UTXOs)
+    # 1. Create transaction
     receiver_address = list(node.ring.keys())[receiver_id]
     transaction = node.create_transaction(receiver_address, amount)
-    # 3. Add to block
-    # node.add_transaction_to_block(transaction)
+    # 3. Add to pending transactions list
     node.add_transaction_to_pending(transaction)
     # 4. Broadcast transaction
     node.broadcast_transaction(transaction)
@@ -211,7 +213,6 @@ async def get_transaction(request: Request):
     print("New transaction received successfully !")
 
     # Add transaction to block
-    # node.add_transaction_to_block(new_transaction)
     node.add_transaction_to_pending(new_transaction)
 
 @app.post("/get_block")
@@ -230,10 +231,8 @@ async def get_block(request: Request):
     if (new_block.validate_block(node.blockchain)):
         # If it is valid:
         # 1. Stop the current block mining
-        # node.unmined_block = False
         node.incoming_block = True
         # 2. Add block to the blockchain
-        # node.blockchain.chain.append(new_block)
         node.add_block_to_chain(new_block)
         print("✅📦! \nAdding it to the chain")
         print("Blockchain length: ", len(node.blockchain.chain))
