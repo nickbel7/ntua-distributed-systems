@@ -122,7 +122,7 @@ else:
 ################## CLIENT ROUTES #####################
 
 @app.get("/api/create_transaction/{receiver_id}/{amount}")
-async def create_transaction(receiver_id: int, amount: int):
+def create_transaction(receiver_id: int, amount: int):
     """
     Creates a new transaction given a receiver wallet and an amount
     """
@@ -145,7 +145,7 @@ async def create_transaction(receiver_id: int, amount: int):
     return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_transactions")
-async def view_transactions():
+def view_transactions():
     """
     Returns the transactions of the last validated, mined block
     """
@@ -170,7 +170,7 @@ async def view_transactions():
     return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_balance")
-async def get_balance():
+def get_balance():
     """
     Gets the total balance for the given node (in NBCs)
     """
