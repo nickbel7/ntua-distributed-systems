@@ -110,8 +110,8 @@ class Node:
         if (transaction.receiver_address == self.wallet.address or 
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
-            #debug 
-            print(f"1. Transaction appended to wallet. {self.ring[transaction.sender_address]['id']} -> {self.ring[transaction.receiver_address]['id']} : {transaction.amount} NBCs")
+        #debug 
+        print(f"1. Transaction appended to wallet. {self.ring[transaction.sender_address]['id']} -> {self.ring[transaction.receiver_address]['id']} : {transaction.amount} NBCs")
         
         # 2. Update the balance of sender and receiver in the ring.
         self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
@@ -134,7 +134,7 @@ class Node:
         total_amount = 0
         print("==> Sender UTXOS (before): ", len(self.blockchain.UTXOs[sender_id]))
         print("Amount: ", amount)
-        print("Sender NBC: ", self.blockchain.wallet_balance(sender_id, self.blockchain.UTXOs))
+        print("Sender NBC: ", Blockchain.wallet_balance(sender_id, self.blockchain.UTXOs))
         while(total_amount < amount):
             temp_utxo = self.blockchain.UTXOs[sender_id].popleft()
             total_amount += temp_utxo.amount

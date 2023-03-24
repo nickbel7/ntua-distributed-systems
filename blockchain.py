@@ -35,7 +35,7 @@ class Blockchain:
                  return False
         return True
     
-    def resolve_conflict(node):
+    def resolve_conflict(self, node):
         """
         Get the correct version of the blockchain when you cannot validate a block
         """
