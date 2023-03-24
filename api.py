@@ -131,8 +131,8 @@ async def create_transaction(receiver_id: int, amount: int):
     
     # Check if there are enough NBCs
     # !! Only for cli demo
-    if (node.ring[node.wallet.address]['balance'] < amount):
-        return JSONResponse(content={"message":'Not enough Noobcoins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
+    # if (node.ring[node.wallet.address]['balance'] < amount):
+    #     return JSONResponse(content={"message":'Not enough Noobcoins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
     
     # 1. Create transaction
     receiver_address = list(node.ring.keys())[receiver_id]
@@ -149,6 +149,9 @@ async def view_transactions():
     """
     Returns the transactions of the last validated, mined block
     """
+    if (len(node.blockchain.chain) <= 1):
+        return JSONResponse('There are no mined blocks at the moment !')
+    
     # 1. Get last block in the chain
     latest_block = node.blockchain.chain[-1]
     # 2. Return a list of transactions (sender, receiver, amount)
@@ -157,9 +160,9 @@ async def view_transactions():
         transactions.append(
             {
                 "sender_id": node.ring[transaction.sender_address]['id'],
-                "sender_address": transaction.sender_address,
+                # "sender_address": transaction.sender_address,
                 "receiver_id": node.ring[transaction.receiver_address]['id'],
-                "receiver_address": transaction.receiver_address,
+                # "receiver_address": transaction.receiver_address,
                 "amount": transaction.amount
             }
         )
