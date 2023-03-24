@@ -25,14 +25,25 @@ class Blockchain:
         Validate the chain from the bootstrap node
         """
 		
-    def resolve_conflict():
+    def resolve_conflict(self):
         """
         Get the correct version of the blockchain when you cannot validate a block
         """
+        for i in range(0, len(self.chain)-1):
+            temp_block = self.chain[i]
+            if (not (i==0 and temp_block.previous_hash == 1 and temp_block.nonce == 0)):
+                    return False
+            elif(not temp_block.validate_block(self)):
+                 return False
+            
+        return True
 
-    def wallet_balance(client_id):
+    def wallet_balance(client_id, UTXOs):      
         """
 	    Get the total wallet balance (based on the wallet of specific client_id)
 		"""
-		#...
-		# Calculate the sum of all UTXOs
+        balance = 0
+        for utxo in UTXOs[client_id]:
+             balance += utxo.amount
+
+        return balance

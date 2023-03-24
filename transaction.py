@@ -8,6 +8,8 @@ import Crypto.Random
 from Crypto.Hash import SHA
 from Crypto.Signature import PKCS1_v1_5
 
+from blockchain import Blockchain
+
 class Transaction:
 
     def __init__(self, sender_address, sender_private_key, receiver_address, value):
@@ -63,7 +65,7 @@ class Transaction:
         except (ValueError, TypeError):
             return False
 
-    def validate_transaction(self, UTXOS):
+    def validate_transaction(self, id, UTXOS):
         """
         Verify signature of sender + 
         Verify sender has enough amount to spend
@@ -75,6 +77,10 @@ class Transaction:
         # elif(ring[str(self.sender_address)]['balance'] < self.amount ):
         #     print("❌ Transaction NOT Validated : Not enough coins")
         #     return False
+
+        elif(Blockchain.wallet_balance(id, UTXOS) < self.amount):
+            print("❌ Transaction NOT Validated : Not enough coins")
+            return False
         
         else: 
             print("✅ Transaction Validated !")

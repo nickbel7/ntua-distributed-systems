@@ -180,7 +180,7 @@ class Node:
             # 3. Get the available transaction
             transaction = self.pending_transactions.pop()
             # 4. Continue if it valid given the temporary UTXOs snapshot
-            if (transaction.validate_transaction(self.temp_utxos)):
+            if (transaction.validate_transaction(self.ring[str(transaction.sender_address)]['id'], self.temp_utxos)):
                 # Add transaction to the block + update temporary UTXOs
                 self.current_block.transactions_list.append(transaction)
                 self.update_temp_utxos(transaction)
