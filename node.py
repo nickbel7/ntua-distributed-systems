@@ -240,7 +240,7 @@ class Node:
         # 3. Try to find the nonce
         while (self.pending_transactions):
             transaction = self.pending_transactions.pop()
-            if (transaction.validate_transaction(self.blockchain.UTXOs)):
+            if (transaction.validate_transaction(self.temp_utxos)):
                 # Add transaction to the block
                 self.current_block.transactions_list.append(transaction)
                 self.update_temp_utxos(transaction)
