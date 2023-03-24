@@ -23,6 +23,17 @@ class Transaction:
         self.signature = None
         self.transaction_id = self.calculate_hash() # το hash του transaction
 
+    # def __json__(self):
+    #     return {
+    #         'sender_address': self.sender_address,
+    #         'receiver_address': self.receiver_address,
+    #         'amount': self.amount,
+    #         'transaction_inputs': self.transaction_inputs,
+    #         'transaction_outputs': self.transaction_outputs,
+    #         'signature': self.signature,
+    #         'transaction_id': self.transaction_id
+    #     }
+    
     def calculate_hash(self):
         """
         Calculate hash of transaction and use it as its ID
@@ -70,7 +81,7 @@ class Transaction:
         Verify signature of sender + 
         Verify sender has enough amount to spend
         """
-        # Comment: DEPRACATED? 
+        
         if (not self.verify_signature()):
             print("❌ Transaction NOT Validated : Not valid address")
             return False
@@ -82,3 +93,5 @@ class Transaction:
         else: 
             print("✅ Transaction Validated !")
             return True
+        
+    
