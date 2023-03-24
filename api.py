@@ -240,6 +240,8 @@ async def get_block(request: Request):
         print("✅📦! \nAdding it to the chain")
         print("Blockchain length: ", len(node.blockchain.chain))
     else:
+        # Resolve conflict in case of wrong previous_hash
+        node.blockchain.resolve_conflict(node)
         print("❌📦 Something went wrong with validation :(")
 
     return JSONResponse('OK')
