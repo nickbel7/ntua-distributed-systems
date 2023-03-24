@@ -186,32 +186,32 @@ async def root():
     return {"message": f"Welcome to Noobcoin"}
 
 @app.post("/get_ring")
-async def get_ring(request: Request):
+def get_ring(request: Request):
     """
     Gets the completed list of nodes from Bootstrap node
     """
-    data = await request.body()
+    data = request.body()
     node.ring = pickle.loads(data)
 
     print("Ring received successfully !")
 
 @app.post("/get_blockchain")
-async def get_blockchain(request: Request):
+def get_blockchain(request: Request):
     """
     Gets the lastest version of the blockchain from the Bootstrap node
     """
-    data = await request.body()
+    data = request.body()
     node.blockchain = pickle.loads(data)
     node.temp_utxos = deepcopy(node.blockchain.UTXOs)
 
     print("Blockchain received successfully !")
 
 @app.post("/get_transaction")
-async def get_transaction(request: Request):
+def get_transaction(request: Request):
     """
     Gets an incoming transaction and adds it in the block.
     """
-    data = await request.body()
+    data = request.body()
     new_transaction = pickle.loads(data)
     print("New transaction received successfully !")
 
@@ -219,11 +219,11 @@ async def get_transaction(request: Request):
     node.add_transaction_to_pending(new_transaction)
 
 @app.post("/get_block")
-async def get_block(request: Request):
+def get_block(request: Request):
     """
     Gets an incoming mined block and adds it to the blockchain.
     """
-    data = await request.body()
+    data = request.body()
     new_block = pickle.loads(data)
     print("New block received successfully !")
 

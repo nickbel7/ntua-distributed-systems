@@ -2,6 +2,7 @@ import time
 import argparse
 import requests
 import socket
+import random
 
 from threading import Thread, Lock
 from texttable import Texttable
@@ -48,19 +49,19 @@ def send_transactions(file, addr):
             line = line.split()
             receiver_id = int(line[0][2])
             amount = int(line[1])
-
+            time.sleep(random.uniform(1,2))
             print(address+str(receiver_id)+'/'+str(amount))
 
             try:
                 response = requests.get(address+str(receiver_id)+'/'+str(amount))
                 data = response.json()
                 print(data)
-                
+
             except requests.exceptions.HTTPError:
                 if (data):
                     print(data)
             time.sleep(0.5)
-            
+
     return
 
 # threads list
@@ -74,4 +75,3 @@ for id in range(len(nodes)):
 print("starting the transactions...")
 for t in t_list:
      t.start()
-     
