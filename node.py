@@ -281,7 +281,6 @@ class Node:
         """
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_block'
-        # requests.post(request_url, json=(self.ring)) # alternative
         requests.post(request_url, pickle.dumps(block))
     
     def broadcast_block(self, block: Block):

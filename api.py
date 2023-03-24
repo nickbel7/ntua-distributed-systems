@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, APIRouter, status
+from fastapi import FastAPI, Request, Depends, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ import pickle
 import time
 import threading
 import requests
+from asgiref.sync import async_to_sync
 
 from node import Node
 from transaction import Transaction
@@ -186,44 +187,51 @@ async def root():
     return {"message": f"Welcome to Noobcoin"}
 
 @app.post("/get_ring")
-def get_ring(request: Request):
+async def get_ring(request: Request):
     """
     Gets the completed list of nodes from Bootstrap node
     """
-    data = request.body()
+    data = await request.body()
     node.ring = pickle.loads(data)
 
     print("Ring received successfully !")
+    return JSONResponse('OK')
 
 @app.post("/get_blockchain")
-def get_blockchain(request: Request):
+async def get_blockchain(request: Request):
     """
     Gets the lastest version of the blockchain from the Bootstrap node
     """
-    data = request.body()
+    data = await request.body()
     node.blockchain = pickle.loads(data)
     node.temp_utxos = deepcopy(node.blockchain.UTXOs)
 
     print("Blockchain received successfully !")
+    return JSONResponse('OK')
+
+async def get_body(request: Request):
+    return await request.body()
 
 @app.post("/get_transaction")
-def get_transaction(request: Request):
+def get_transaction(data: bytes = Depends(get_body)):
     """
     Gets an incoming transaction and adds it in the block.
     """
-    data = request.body()
+    # data = request.body()
     new_transaction = pickle.loads(data)
     print("New transaction received successfully !")
 
     # Add transaction to block
     node.add_transaction_to_pending(new_transaction)
 
+    return JSONResponse('OK')
+
 @app.post("/get_block")
-def get_block(request: Request):
+def get_block(data: bytes = Depends(get_body)):
     """
     Gets an incoming mined block and adds it to the blockchain.
     """
-    data = request.body()
+    # data = request.body()
     new_block = pickle.loads(data)
     print("New block received successfully !")
 
