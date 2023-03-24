@@ -12,7 +12,6 @@ import pickle
 import time
 import threading
 import requests
-from asgiref.sync import async_to_sync
 
 from node import Node
 from transaction import Transaction
