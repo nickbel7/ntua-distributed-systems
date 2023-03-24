@@ -283,7 +283,7 @@ def check_full_ring():
     Checks if all nodes have been added to the ring
     """
     time.sleep(2)
-    if (len(node.ring) >= total_nodes):
+    if (len(node.ring) == total_nodes):
         node.broadcast_ring()
         node.broadcast_blockchain()
         node.broadcast_initial_nbc()

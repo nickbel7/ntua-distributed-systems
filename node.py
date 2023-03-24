@@ -128,20 +128,18 @@ class Node:
         sender_id = self.ring[str(sender_address)]['id']
         receiver_id = self.ring[str(receiver_address)]['id']
         # Update receiver UTXOs
-        print("==> Receiver UTXOS (before): ", len(self.blockchain.UTXOs[receiver_id]))
         self.blockchain.UTXOs[receiver_id].append(UTXO(sender_id, receiver_id, amount))
-        print("==> Receiver UTXOS (after): ", len(self.blockchain.UTXOs[receiver_id]))
 
         # Update sender UTXOs
         total_amount = 0
         print("==> Sender UTXOS (before): ", len(self.blockchain.UTXOs[sender_id]))
+        print("Amount: ", amount)
+        print("Sender NBC: ", self.blockchain.wallet_balance(sender_id, self.blockchain.UTXOs))
         while(total_amount < amount):
             temp_utxo = self.blockchain.UTXOs[sender_id].popleft()
             total_amount += temp_utxo.amount
         if (total_amount > amount):
             self.blockchain.UTXOs[sender_id].append(UTXO(sender_id, sender_id, total_amount-amount))
-        print("Total amount: ", total_amount)
-        print("Amount: ", amount)
         print("==> Sender UTXOS (after): ", len(self.blockchain.UTXOs[sender_id]))
         return
     
