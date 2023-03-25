@@ -3,6 +3,7 @@ import argparse
 import requests
 import socket
 import random
+import os 
 
 from threading import Thread, Lock
 from texttable import Texttable
@@ -13,6 +14,14 @@ argParser.add_argument("-p", "--path", help="Destination of folder which contain
 args = argParser.parse_args()
 
 path = args.path
+
+CAPACITY = os.getenv('BLOCK_SIZE')
+DIFFICULTY = os.getenv('MINING_DIFFICULTY')
+NODES = os.getenv('TOTAL_NODES')
+
+with open('results.txt', 'w') as f:
+    f.write('CAPACITY:' + str(CAPACITY)+', DIFFICULTY:'+str(DIFFICULTY)+', NODES:'+str(NODES))
+
 
 nodes = []
 with open("nodes_addr.txt", 'r') as f:
