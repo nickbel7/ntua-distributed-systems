@@ -68,6 +68,8 @@ class Node:
         self.pending_transactions = deque()
         self.temp_utxos = None  # for validation purposes
 
+        self.incoming_block_lock = threading.Lock()
+
 
     ##################### MINING ###########################
     def create_new_block(self):
@@ -261,7 +263,8 @@ class Node:
         self.update_pending_transactions(block)
 
         # Update incoming_block flag
-        self.incoming_block = False
+        with (incoming_block_lock):
+            self.incoming_block = False
 
     def mine_block(self, block: Block):
         """

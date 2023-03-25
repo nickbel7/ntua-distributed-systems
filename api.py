@@ -260,7 +260,8 @@ def get_block(data: bytes = Depends(get_body)):
     if (new_block.validate_block(node.blockchain)):
         # If it is valid:
         # 1. Stop the current block mining
-        node.incoming_block = True
+        with(node.incoming_block_lock):
+            node.incoming_block = True
         # 2. Add block to the blockchain
         node.add_block_to_chain(new_block)
         print("✅📦! \nAdding it to the chain")
