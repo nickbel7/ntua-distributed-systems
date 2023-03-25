@@ -60,7 +60,7 @@ Everytime a new transaction arrives it is appended in the list in order to be pr
 * If the node is not already mining it starst filling up a block using transactions from the pending queue. 
 * This block might be added to the blockchain, so it must be valid (up to date with the current state of the Blockchain). This means that not only the Previous Hash field of the block must refer to the hash of the last block in the chain, but the transactions it contains must be **Valid** too (the amount being transferred can be found in the sender's current state of **UTXOs**). 
 
-3.2 **Unspent Output Transactions and Transaction Validation**
+**Unspent Output Transactions and Transaction Validation**
 * In order to be able to check this, the Blockchain Object has an attribute named UTXOs, that stores the list of **Unspent Output Transactions** of each node. The UTXOs are updated with each new addition to the blockchain in order to reflect the current state of each node's NBCs.
 ![utxos](https://user-images.githubusercontent.com/94255085/227732179-9776d321-ecbe-4799-84ae-1c9a4c9a9213.png)
 * When creating a new block to fill, the node also creates a deepcopy of the current UTXOs, named **Temp_UTXOs**. The node then pops transactions from the top of the pending queue validating them before adding to the block. If the transaction popped refers to an amount that can be covered by the sender's current state of UTXOs the Temp_UTXOs is updated (some of the senders UTXOs are considered spent by the viewpoint of the block) and the transaction is added to the block. 
