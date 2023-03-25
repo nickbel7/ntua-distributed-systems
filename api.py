@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, APIRouter, status
+from fastapi import FastAPI, Request, Depends, APIRouter, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -175,9 +175,28 @@ def get_balance():
     Gets the total balance for the given node (in NBCs)
     """
     # 1. Get the NBCs attribute from the node object
-    balance = node.ring[node.wallet.address]['balance']
+    # balance = node.ring[node.wallet.address]['balance'] # Alternative
+    balance = node.blockchain.wallet_balance(node.id, node.blockchain.UTXOs[node.id])
 
     return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
+
+@app.get("/api/get_chain_length")
+async def get_chain_length():
+    """
+    Gets the current valid blockchain length of the receiver
+    """
+    # 1. Get the current length of the node's blockchain
+    chain_len = len(node.blockchain.chain)
+
+    return JSONResponse({'chain_length': chain_len}, status_code=status.HTTP_200_OK)
+
+@app.get("/api/get_chain")
+async def get_chain():
+    """
+    Gets the current valid blockchain of the receiver
+    """
+    # 1. Get the current length of the node's blockchain
+    return Response(pickle.dumps(node.blockchain), status_code=status.HTTP_200_OK)
 
 ################## INTERNAL ROUTES #####################
 @app.get("/")
@@ -234,10 +253,10 @@ def get_block(data: bytes = Depends(get_body)):
     new_block = pickle.loads(data)
     print("New block received successfully !")
 
-    # Pending: implement logic when receiving a block
+    # 0. Wait until new block has been synchronized
+    while(node.incoming_block):
+        continue
     # 1. Check validity of block
-    previous_hash = node.blockchain.chain[-1].hash
-    new_block.previous_hash = previous_hash 
     if (new_block.validate_block(node.blockchain)):
         # If it is valid:
         # 1. Stop the current block mining
@@ -246,6 +265,10 @@ def get_block(data: bytes = Depends(get_body)):
         node.add_block_to_chain(new_block)
         print("✅📦! \nAdding it to the chain")
         print("Blockchain length: ", len(node.blockchain.chain))
+    
+    # Check if latest_block.previous_hash == incoming_block.previous_hash
+    elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
+        print("🗑️ Rejected incoming block")
     else:
         # Resolve conflict in case of wrong previous_hash
         node.blockchain.resolve_conflict(node)
@@ -284,7 +307,6 @@ def check_full_ring():
     """
     time.sleep(2)
     if (len(node.ring) == total_nodes):
-        print("====== ‼️‼️ BEGIN BOOTSTRAPING ‼️‼️ =======")
         node.broadcast_ring()
         node.broadcast_blockchain()
         node.broadcast_initial_nbc()

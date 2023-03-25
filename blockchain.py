@@ -39,7 +39,7 @@ class Blockchain:
         """
         Get the correct version of the blockchain when you cannot validate a block
         """
-        print("☠️ FOUND CONFLICT: Initializing Resolve Conflict Method")
+        print("☠️  FOUND CONFLICT: Initializing Resolve Conflict Method")
         # 1. initialize list to hold the len of the chains 
         chain_lens = []
         # 2. Send request to all nodes to send back the current len of the blockchain 

@@ -111,13 +111,13 @@ class Node:
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
         #debug 
-        print(f"1. Transaction appended to wallet. {self.ring[transaction.sender_address]['id']} -> {self.ring[transaction.receiver_address]['id']} : {transaction.amount} NBCs")
+        print(f"1. Transaction added to blockchain: {self.ring[transaction.sender_address]['id']} -> {self.ring[transaction.receiver_address]['id']} : {transaction.amount} NBCs")
         
         # 2. Update the balance of sender and receiver in the ring.
         self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
         self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
         # debug
-        print("2. Updated ring: ", self.ring.values())
+        # print("2. Updated ring: ", self.ring.values())
         return
     
     def update_original_utxos(self, transaction: Transaction):
@@ -132,15 +132,12 @@ class Node:
 
         # Update sender UTXOs
         total_amount = 0
-        print("==> Sender UTXOS (before): ", len(self.blockchain.UTXOs[sender_id]))
-        print("Amount: ", amount)
-        print("Sender NBC: ", Blockchain.wallet_balance(sender_id, self.blockchain.UTXOs))
         while(total_amount < amount):
             temp_utxo = self.blockchain.UTXOs[sender_id].popleft()
             total_amount += temp_utxo.amount
         if (total_amount > amount):
             self.blockchain.UTXOs[sender_id].append(UTXO(sender_id, sender_id, total_amount-amount))
-        print("==> Sender UTXOS (after): ", len(self.blockchain.UTXOs[sender_id]))
+        
         return
     
     def update_temp_utxos(self, transaction: Transaction):
@@ -183,7 +180,7 @@ class Node:
         self.is_mining = True
         # 2. Check if there are any transactions waiting
         while (self.pending_transactions):
-            print("PENDING TRANSACTIONS: ", [(self.ring[str(trans.sender_address)]['id'], self.ring[str(trans.receiver_address)], trans.amount) for trans in self.pending_transactions])
+            print("PENDING TRANSACTIONS: ", [(self.ring[str(trans.sender_address)]['id'], self.ring[str(trans.receiver_address)]['id'], trans.amount) for trans in self.pending_transactions])
             print("Number of pending transactions: ", len(self.pending_transactions))
             # 3. Get the available transaction
             transaction = self.pending_transactions.pop()
@@ -200,12 +197,15 @@ class Node:
                     # 6.1 YOU FOUND IT FIRST
                     if (is_mined_by_me):
                         print("Block was mined by: ", self.id)
-                        # 6.1.1 Add block to originanl chain + update ring/wallet
+                        # 6.1.1 Add previous_hash to mined block
+                        previous_hash = self.blockchain.chain[-1].hash
+                        self.current_block.previous_hash = previous_hash 
+                        # 6.1.2 Add block to originanl chain + update ring/wallet
                         self.blockchain.chain.append(self.current_block)
                         for transaction in self.current_block.transactions_list:
                             self.update_wallet_state(transaction)
                             self.blockchain.UTXOs = self.temp_utxos
-                        # 6.1.2 Broadcast it to all others
+                        # 6.1.3 Broadcast it to all others
                         self.broadcast_block(self.current_block)
 
                         print("Block broadcasted successfully !")
@@ -417,7 +417,6 @@ class Node:
 
         # Add transaction to pending list
         self.add_transaction_to_pending(transaction)
-        print("===== SEND 100 NBCs =======")
         # Broadcast transaction to other nodes in the network
         self.broadcast_transaction(transaction)
     

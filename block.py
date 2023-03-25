@@ -51,15 +51,22 @@ class Block:
                2)if the previous_hash field is equal to the the hash of the actual previous block
         """
         # Special case: If it is the genesis block, it's valid 
-        if (self.previous_hash == 0 and self.nonce == 0):
+        if (self.previous_hash == 1 and self.nonce == 0):
             return True
         
         # Get last block of the chain and check its hash
         prev_block = blockchain.chain[-1]
-        if ((self.previous_hash == prev_block.hash)
-            and (self.hash.startswith('0' * blockchain.difficulty))):
-            # debug
+        
+        # 1) Check if the previous_hash field is equal to the the hash of the actual previous block
+        if ((self.previous_hash != prev_block.hash)):
+            print("❌ Error in block validation: Not correct previous_hash")
+            return False
+
+        # 2) Check if current_hash is correct
+        if (self.hash.startswith('0' * blockchain.difficulty)):
             print('Block validated !')
             return True
-
-        return False
+        else:
+            print("❌ Error in block validation: Not correct hash")
+            return False
+        
