@@ -97,6 +97,9 @@ class Node:
         # Special case: after GENESIS block
         if self.current_block is None:
             self.current_block = self.create_new_block()
+            # Add previous_hash to mined block
+            previous_hash = self.blockchain.chain[-1].hash
+            self.current_block.previous_hash = previous_hash 
 
         # 2. Begin mining process if node is idle
         if (not self.is_mining):
@@ -196,9 +199,6 @@ class Node:
                 # 5. Check if block has reached full capacity
                 if (self.check_full_block()):
                     print("========== BEGINING MINING ⛏️  ============")
-                    # Add previous_hash to mined block
-                    previous_hash = self.blockchain.chain[-1].hash
-                    self.current_block.previous_hash = previous_hash 
                     original_chain_len = len(self.blockchain.chain)
                     # 6. Mine current_block
                     is_mined_by_me = self.mine_block(self.current_block)
@@ -227,7 +227,10 @@ class Node:
                             continue
                         
                     # 7. Create a new (empty) block
-                    self.current_block = self.create_new_block()        
+                    self.current_block = self.create_new_block()  
+                    # Add previous_hash to mined block
+                    previous_hash = self.blockchain.chain[-1].hash
+                    self.current_block.previous_hash = previous_hash       
                 
         # Send the is_mining flag to false if no transactions remain
         self.is_mining = False
