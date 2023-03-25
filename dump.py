@@ -3,6 +3,7 @@ import time
 class Dump:
     def __init__(self):
         self.file = open("./testing/results.txt", "r+")
+        print("opened results file")
         self.prev_stamp = None
         self.block = None
 
