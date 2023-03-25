@@ -49,9 +49,13 @@ Transactions can only be made between 2 nodes, one is the sender the other is th
 Everytime a new transaction arrives it is appended in the list in order to be properly processed by the node  (during the mining process).
 * The node that wants to send NBCs to another, creates a new Transaction specifying the Receiver Address and the Amount it wants to transfer.
 * Once the transaction is created the node signs it with its private signature, appends it to its own Pending Transactions List and then  broadcasts it to the network. 
+![mining1](https://user-images.githubusercontent.com/94255085/227732053-f502c412-0e2c-41d9-9681-035afc09bcc1.png)
 
 2.2 **Receive a Transaction**
 * Once a node receives a transaction by someone else, it appends it to its Pending Transactions List.
 * If the node is not already mining it starst filling up a block using transactions from the pending queue. 
-* This block will be mined, so it must be valid (up to date with the current state of the Blockchain). This means that not only the Previous Hash field of the block must refer to the hash of the last block in the chain, but the transactions it contains must be **Valid** too. This means that the amount being transferred can be found in the sender's current state of **UTXOs**. 
-* In order to be able to check this, the Blockchain Object has an attribute named UTXOs, that stores the list of Output Transactions of each node. The UTXOs are updated with each new addition to the blockchain in order to reflect the current state of each node's NBCs.
+* This block might be added to the blockchain, so it must be valid (up to date with the current state of the Blockchain). This means that not only the Previous Hash field of the block must refer to the hash of the last block in the chain, but the transactions it contains must be **Valid** too (the amount being transferred can be found in the sender's current state of **UTXOs**). 
+* In order to be able to check this, the Blockchain Object has an attribute named UTXOs, that stores the list of **Unspent Output Transactions** of each node. The UTXOs are updated with each new addition to the blockchain in order to reflect the current state of each node's NBCs.
+* ![utxos](https://user-images.githubusercontent.com/94255085/227732179-9776d321-ecbe-4799-84ae-1c9a4c9a9213.png)
+
+* 
