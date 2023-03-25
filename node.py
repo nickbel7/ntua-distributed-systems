@@ -65,10 +65,12 @@ class Node:
         self.current_block = None
         self.is_mining = False
         self.incoming_block = False
+        self.processing_block = False
         self.pending_transactions = deque()
         self.temp_utxos = None  # for validation purposes
 
         self.incoming_block_lock = threading.Lock()
+        self.processing_block_lock = threading.Lock()
 
 
     ##################### MINING ###########################
