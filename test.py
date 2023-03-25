@@ -3,7 +3,8 @@ import argparse
 import requests
 import socket
 import random
-import os 
+import os
+from dotenv import load_dotenv
 
 from threading import Thread, Lock
 from texttable import Texttable
@@ -14,7 +15,7 @@ argParser.add_argument("-p", "--path", help="Destination of folder which contain
 args = argParser.parse_args()
 
 path = args.path
-
+load_dotenv()
 CAPACITY = os.getenv('BLOCK_SIZE')
 DIFFICULTY = os.getenv('MINING_DIFFICULTY')
 NODES = os.getenv('TOTAL_NODES')
