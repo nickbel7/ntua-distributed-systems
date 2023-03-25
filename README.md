@@ -90,4 +90,5 @@ Everytime a new transaction arrives it is appended in the list in order to be pr
 * The node then decides that the node that has the longest chain has the most accurate perspective of the current state of NBCs in the system and asks that node for its blockchain instance.
 * The current blockchain instance is updated to reflect the longest chain found and the conflict is considred to be resolved.
 
-![conflict](https://user-images.githubusercontent.com/94255085/227737509-a6148cfd-e2fb-41a7-9de2-11be9de42c94.png)
+![conflict](https://user-images.githubusercontent.com/94255085/227737881-7749f0d9-52c3-4234-8293-7ab49866d323.png)
+
