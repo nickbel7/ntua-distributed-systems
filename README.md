@@ -33,5 +33,17 @@
 
 ## How it works
 1. Bootstraping
+![bootstrapping](https://user-images.githubusercontent.com/94255085/227728144-01632b30-4df5-454a-a7d7-5060f41049f2.png)
+* In order for a node in the network to be able to communicate with the others, it stores the necessary information in a dicionary structure named ring. By default, when a node enters the network, the ring holds no information. The node must first communicate with the Bootstrap. Thus it sends a post request to the Bootstrap with its ip, port and public wallet address . 
+* The Bootstrap node updates its own ring with the information it receives from the other nodes. 
+* The total number of nodes in the system is fixed, so once every node has entered the network the Bootstrap broadcasts the ring information to everyone along with 100 NBCs. 
+* Now the nodes are ready to send transactions to each other. 
+
 
 2. Transactions + Mining
+![trxnspng](https://user-images.githubusercontent.com/94255085/227729379-1cfbc117-d2ec-4a1d-af82-05959594044e.png)
+* Transactions can only be made between 2 nodes, one is the sender the other is the receiver. 
+* In order to keep track of the transactions made, each node keeps a list of **Pending Transactions**. 
+Everytime a new transaction arrives it is appended in the list in order to be properly processed by the node  (during the mining process).
+* The node that wants to send NBCs to another, creates a new Transaction specifying the Receiver Address and the Amount it wants to transfer.
+* Once the transaction is created the node signs it with its private signature, appends it to its own Pending Transactions List and then  broadcasts it to the network. 
