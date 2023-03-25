@@ -258,6 +258,9 @@ class Node:
         """
         # Add block to originanl chain
         self.blockchain.chain.append(block)
+        # debug
+        print("🔗 BLOCKCHAIN 🔗")
+        print([block.hash[:5] for block in self.blockchain.chain])
         # Update UTXOs and wallet accordingly
         for transaction in block.transactions_list:
             self.update_original_utxos(transaction)
