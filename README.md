@@ -40,7 +40,7 @@
 * Now the nodes are ready to send transactions to each other. 
 
 
-2. **Transactions & Mining**
+2. **Transactions**
 ![trxnspng](https://user-images.githubusercontent.com/94255085/227729654-36368774-da94-435c-9406-9f2b377df0a9.png)
 
 2.1 **Create and Send Transaction**
@@ -53,9 +53,26 @@ Everytime a new transaction arrives it is appended in the list in order to be pr
 
 2.2 **Receive a Transaction**
 * Once a node receives a transaction by someone else, it appends it to its Pending Transactions List.
+
+3. **Mining**
+3.1 **Preparing a block to mine**
 * If the node is not already mining it starst filling up a block using transactions from the pending queue. 
 * This block might be added to the blockchain, so it must be valid (up to date with the current state of the Blockchain). This means that not only the Previous Hash field of the block must refer to the hash of the last block in the chain, but the transactions it contains must be **Valid** too (the amount being transferred can be found in the sender's current state of **UTXOs**). 
+3.2 **Unspent Output Transactions and Transaction Validation**
 * In order to be able to check this, the Blockchain Object has an attribute named UTXOs, that stores the list of **Unspent Output Transactions** of each node. The UTXOs are updated with each new addition to the blockchain in order to reflect the current state of each node's NBCs.
-* ![utxos](https://user-images.githubusercontent.com/94255085/227732179-9776d321-ecbe-4799-84ae-1c9a4c9a9213.png)
+![utxos](https://user-images.githubusercontent.com/94255085/227732179-9776d321-ecbe-4799-84ae-1c9a4c9a9213.png)
+* When creating a new block to fill, the node also creates a deepcopy of the current UTXOs, named **Temp_UTXOs**. The node then pops transactions from the top of the pending queue validating them before adding to the block. If the transaction popped refers to an amount that can be covered by the sender's current state of UTXOs the Temp_UTXOs is updated (some of the senders UTXOs are considered spent by the viewpoint of the block) and the transaction is added to the block. 
+![block](https://user-images.githubusercontent.com/94255085/227732936-2f62f7e9-a4a6-4053-a9ab-0f9fcb9248bc.png)
 
-* 
+3.3 **The Mining Process**
+* Once the number of transactions in the block is equal to the **capacity** of the block (which is fixed) the node can start mining the block, in hopes of finding the proper **nonce** and adding to the Blockchain.  
+* If the block finds a proper nonce it adds the block to its Blockchain and broadcasts it to the other nodes in the network.
+![mining2](https://user-images.githubusercontent.com/94255085/227733572-296f389b-26cf-4836-9ddc-a263f06e58c9.png)
+
+3.4 **Receiving a Block mined by someone else**
+* All nodes are miners, which means that there is a possibility another node manages to mine a block faster.
+* In that case, the block we are trying to mine is depracated: the transactions it contains have been validated refering to a previous state of the Blockchain and UTXOs and some of them might have been present in the block that was added to the chain. 
+* In order to solve this, once a **valid block** mined by someone else arrives to the node, the mining process stops. The node's Blockchain object is updated properly (chain and UTXOs) and the Temp_UTXOs list is changed to reflect the current state of the UTXOs in the system.
+* The transactions that had been added to the block the node was to mine are put back to the pending transactions queue. We then check if the pending transactions list contains any of the transactions in the mined block and remove them (so as not to **doublespend** NBCs).
+* The mining process can then start again from the beginning, in hopes of finding the next block to add to the chain.
+ 
