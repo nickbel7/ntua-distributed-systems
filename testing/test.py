@@ -19,15 +19,6 @@ with open("nodes_addr.txt", 'r') as f:
     for line in f:
         nodes.append(line.strip('\n'))
 
-# Variables to get metrics of system and their locks for sync
-global total_time
-global total_trans
-global total_mines
-
-total_time_lock = Lock()
-total_trans_lock = Lock()
-total_mines = Lock()
-
 def get_filename(id):
      return str(path)+"/transactions"+str(id)+".txt"
 

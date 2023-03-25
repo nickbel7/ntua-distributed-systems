@@ -24,11 +24,14 @@ import os
 import random
 import threading
 
+from dump import Dump
+
 from wallet import Wallet
 from blockchain import Blockchain
 from transaction import Transaction
 from block import Block
 from utxo import UTXO
+
 
 load_dotenv()
 block_size = int(os.getenv('BLOCK_SIZE'))
@@ -71,6 +74,8 @@ class Node:
 
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
+
+        self.dump = Dump()
 
 
     ##################### MINING ###########################
@@ -145,6 +150,7 @@ class Node:
                 total_amount += temp_utxo.amount
             except:
                 print("‼️ Not enough UTXOs for : ", sender_id)
+                break
         if (total_amount > amount):
             self.blockchain.UTXOs[sender_id].append(UTXO(sender_id, sender_id, total_amount-amount))
         
@@ -210,6 +216,8 @@ class Node:
                         # 6.1.1 Add block to originanl chain + update ring/wallet
                         print("🏆 Block was mined by: ", self.id)
                         self.blockchain.chain.append(self.current_block)
+                        # dump data
+                        self.dump.timestamp()
                         print("✅📦! Adding it to the chain")
                         #debug
                         print("🔗 BLOCKCHAIN 🔗")
@@ -267,6 +275,8 @@ class Node:
         """
         # Add block to originanl chain
         self.blockchain.chain.append(block)
+        # dump data
+        self.dump.timestamp()
         # debug
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])
