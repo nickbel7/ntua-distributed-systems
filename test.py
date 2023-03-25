@@ -20,7 +20,7 @@ DIFFICULTY = os.getenv('MINING_DIFFICULTY')
 NODES = os.getenv('TOTAL_NODES')
 
 with open('results.txt', 'w') as f:
-    f.write('CAPACITY:' + str(CAPACITY)+', DIFFICULTY:'+str(DIFFICULTY)+', NODES:'+str(NODES))
+    f.write('CAPACITY:' + str(CAPACITY)+', DIFFICULTY:'+str(DIFFICULTY)+', NODES:'+str(NODES)+'\n')
 
 
 nodes = []
