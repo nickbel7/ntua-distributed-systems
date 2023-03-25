@@ -196,20 +196,21 @@ class Node:
                 # 5. Check if block has reached full capacity
                 if (self.check_full_block()):
                     print("========== BEGINING MINING ⛏️  ============")
+                    # Add previous_hash to mined block
+                    previous_hash = self.blockchain.chain[-1].hash
+                    self.current_block.previous_hash = previous_hash 
+                    original_chain_len = len(self.blockchain.chain)
                     # 6. Mine current_block
                     is_mined_by_me = self.mine_block(self.current_block)
                     # 6.1 YOU FOUND IT FIRST
-                    if (is_mined_by_me):
+                    if (is_mined_by_me and len(self.blockchain.chain) == original_chain_len):
+                        # 6.1.1 Add block to originanl chain + update ring/wallet
                         print("🏆 Block was mined by: ", self.id)
-                        # 6.1.1 Add previous_hash to mined block
-                        previous_hash = self.blockchain.chain[-1].hash
-                        self.current_block.previous_hash = previous_hash 
-                        # 6.1.2 Add block to originanl chain + update ring/wallet
                         self.blockchain.chain.append(self.current_block)
                         for transaction in self.current_block.transactions_list:
                             self.update_wallet_state(transaction)
                             self.blockchain.UTXOs = self.temp_utxos
-                        # 6.1.3 Broadcast it to all others
+                        # 6.1.2 Broadcast it to all others
                         self.broadcast_block(self.current_block)
 
                         print("Block broadcasted successfully !")
@@ -285,7 +286,7 @@ class Node:
             # Try a .random() nonce each time (to avoid bias over the nodes)
             current_nonce = random.randint(0, 10000000)
 
-        print("🛑 Stopped the mining!")
+        print("🛑 Stopped mining!")
         return False
 
     def unicast_block(self, node, block):
