@@ -269,6 +269,7 @@ def get_block(data: bytes = Depends(get_body)):
         with(node.incoming_block_lock):
             node.incoming_block = True
         node.processing_block = False
+        print("Block was ⛏️  by someone else 🧑")
         # 2. Add block to the blockchain
         node.add_block_to_chain(new_block)
         print("✅📦! \nAdding it to the chain")

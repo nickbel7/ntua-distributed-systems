@@ -200,7 +200,7 @@ class Node:
                     is_mined_by_me = self.mine_block(self.current_block)
                     # 6.1 YOU FOUND IT FIRST
                     if (is_mined_by_me):
-                        print("Block was mined by: ", self.id)
+                        print("🏆 Block was mined by: ", self.id)
                         # 6.1.1 Add previous_hash to mined block
                         previous_hash = self.blockchain.chain[-1].hash
                         self.current_block.previous_hash = previous_hash 
@@ -285,7 +285,7 @@ class Node:
             # Try a .random() nonce each time (to avoid bias over the nodes)
             current_nonce = random.randint(0, 10000000)
 
-        print("Block was ⛏️  by someone else 🧑")
+        # print("Block was ⛏️  by someone else 🧑")
         return False
 
     def unicast_block(self, node, block):
