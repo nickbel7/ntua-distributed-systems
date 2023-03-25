@@ -254,37 +254,38 @@ def get_block(data: bytes = Depends(get_body)):
     new_block = pickle.loads(data)
     print("New block received successfully !")
 
-    with(node.processing_block_lock):
-        while(node.processing_block):
-            continue
-        node.processing_block = True
+    # with(node.processing_block_lock):
+    #     while(node.processing_block):
+    #         continue
+    #     node.processing_block = True
 
     # 0. Wait until new block has been synchronized
-    while(node.incoming_block):
-        continue
+    # while(node.incoming_block):
+    #     continue
+    processing_lock = threading.Lock()
+    with (processing_lock):
+        # 1. Check validity of block
+        if (new_block.validate_block(node.blockchain)):
+            # If it is valid:
+            # 1. Stop the current block mining
+            with(node.incoming_block_lock):
+                node.incoming_block = True
+            # node.processing_block = False
+            print("Block was ⛏️  by someone else 🧑")
+            # 2. Add block to the blockchain
+            node.add_block_to_chain(new_block)
+            print("✅📦! Adding it to the chain")
+            print("Blockchain length: ", len(node.blockchain.chain))
+        
+        # Check if latest_block.previous_hash == incoming_block.previous_hash
+        elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
+            print("🗑️ Rejected incoming block")
+        else:
+            # Resolve conflict in case of wrong previous_hash
+            node.blockchain.resolve_conflict(node)
+            print("❌📦 Something went wrong with validation 🙁")
 
-    # 1. Check validity of block
-    if (new_block.validate_block(node.blockchain)):
-        # If it is valid:
-        # 1. Stop the current block mining
-        with(node.incoming_block_lock):
-            node.incoming_block = True
-        node.processing_block = False
-        print("Block was ⛏️  by someone else 🧑")
-        # 2. Add block to the blockchain
-        node.add_block_to_chain(new_block)
-        print("✅📦! Adding it to the chain")
-        print("Blockchain length: ", len(node.blockchain.chain))
-    
-    # Check if latest_block.previous_hash == incoming_block.previous_hash
-    elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
-        print("🗑️ Rejected incoming block")
-    else:
-        # Resolve conflict in case of wrong previous_hash
-        node.blockchain.resolve_conflict(node)
-        print("❌📦 Something went wrong with validation :(")
-
-    return JSONResponse('OK')
+        return JSONResponse('OK')
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
