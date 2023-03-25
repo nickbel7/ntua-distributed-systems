@@ -285,7 +285,7 @@ class Node:
             # Try a .random() nonce each time (to avoid bias over the nodes)
             current_nonce = random.randint(0, 10000000)
 
-        # print("Block was ⛏️  by someone else 🧑")
+        print("🛑 Stopped the mining!")
         return False
 
     def unicast_block(self, node, block):
