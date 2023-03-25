@@ -208,6 +208,9 @@ class Node:
                         print("🏆 Block was mined by: ", self.id)
                         self.blockchain.chain.append(self.current_block)
                         print("✅📦! Adding it to the chain")
+                        #debug
+                        print("🔗 BLOCKCHAIN 🔗")
+                        print([block.hash[:7] for block in self.blockchain.chain])
                         for transaction in self.current_block.transactions_list:
                             self.update_wallet_state(transaction)
                             self.blockchain.UTXOs = self.temp_utxos
@@ -260,7 +263,7 @@ class Node:
         self.blockchain.chain.append(block)
         # debug
         print("🔗 BLOCKCHAIN 🔗")
-        print([block.hash[:5] for block in self.blockchain.chain])
+        print([block.hash[:7] for block in self.blockchain.chain])
         # Update UTXOs and wallet accordingly
         for transaction in block.transactions_list:
             self.update_original_utxos(transaction)
