@@ -2,8 +2,6 @@ import time
 
 class Dump:
     def __init__(self):
-        self.file = open("./testing/results.txt", "r+")
-        print("opened results file")
         self.prev_stamp = None
         self.block = None
 
@@ -13,6 +11,7 @@ class Dump:
             self.block = 0
             self.prev_stamp = current
         stamp = self.prev_stamp - current
-        self.file.write(str(self.block)+', '+str(current)+', ' + str(stamp)+'\n')
+        with open("./testing/results.txt", "r+") as f:
+            f.write(str(self.block)+', '+str(current)+', ' + str(stamp)+'\n')
         self.block += 1
         self.prev_stamp = current
