@@ -16,6 +16,7 @@ import requests
 from node import Node
 from transaction import Transaction
 from utxo import UTXO
+from blockchain import Blockchain
 
 app = FastAPI()
 # app = APIRouter()
@@ -176,7 +177,7 @@ def get_balance():
     """
     # 1. Get the NBCs attribute from the node object
     # balance = node.ring[node.wallet.address]['balance'] # Alternative
-    balance = node.blockchain.wallet_balance(node.id, node.blockchain.UTXOs[node.id])
+    balance = Blockchain.wallet_balance(node.id, node.blockchain.UTXOs[node.id])
 
     return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
@@ -272,7 +273,7 @@ def get_block(data: bytes = Depends(get_body)):
         print("Block was ⛏️  by someone else 🧑")
         # 2. Add block to the blockchain
         node.add_block_to_chain(new_block)
-        print("✅📦! \nAdding it to the chain")
+        print("✅📦! Adding it to the chain")
         print("Blockchain length: ", len(node.blockchain.chain))
     
     # Check if latest_block.previous_hash == incoming_block.previous_hash

@@ -207,6 +207,7 @@ class Node:
                         # 6.1.1 Add block to originanl chain + update ring/wallet
                         print("🏆 Block was mined by: ", self.id)
                         self.blockchain.chain.append(self.current_block)
+                        print("✅📦! Adding it to the chain")
                         for transaction in self.current_block.transactions_list:
                             self.update_wallet_state(transaction)
                             self.blockchain.UTXOs = self.temp_utxos
@@ -217,6 +218,7 @@ class Node:
 
                     # 6.2 SOMEONE ELSE FOUND IT
                     else:
+                        print("🛑 Stopped mining!")
                         # 6.2.1 Wait until new block has been synchronized
                         while(self.incoming_block):
                             continue
@@ -286,7 +288,6 @@ class Node:
             # Try a .random() nonce each time (to avoid bias over the nodes)
             current_nonce = random.randint(0, 10000000)
 
-        print("🛑 Stopped mining!")
         return False
 
     def unicast_block(self, node, block):
