@@ -140,8 +140,11 @@ class Node:
         # Update sender UTXOs
         total_amount = 0
         while(total_amount < amount):
-            temp_utxo = self.blockchain.UTXOs[sender_id].popleft()
-            total_amount += temp_utxo.amount
+            try:
+                temp_utxo = self.blockchain.UTXOs[sender_id].popleft()
+                total_amount += temp_utxo.amount
+            except:
+                print("‼️ Not enough UTXOs for : ", sender_id)
         if (total_amount > amount):
             self.blockchain.UTXOs[sender_id].append(UTXO(sender_id, sender_id, total_amount-amount))
         
