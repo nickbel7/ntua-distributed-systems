@@ -19,12 +19,12 @@ CAPACITY = os.getenv('BLOCK_SIZE')
 DIFFICULTY = os.getenv('MINING_DIFFICULTY')
 NODES = os.getenv('TOTAL_NODES')
 
-with open('./testing/results.txt', 'w') as f:
+with open('./testing/results.txt', 'a') as f:
     f.write('CAPACITY:' + str(CAPACITY)+', DIFFICULTY:'+str(DIFFICULTY)+', NODES:'+str(NODES)+'\n')
 
 
 nodes = []
-with open("./testing/nodes_addr.txt", 'r') as f:
+with open("testing/nodes_addr.txt", 'r') as f:
     for line in f:
         nodes.append(line.strip('\n'))
 
