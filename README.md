@@ -64,15 +64,16 @@ Everytime a new transaction arrives it is appended in the list in order to be pr
 
 **Unspent Output Transactions and Transaction Validation**
 * In order to be able to check this, the Blockchain Object has an attribute named UTXOs, that stores the list of **Unspent Output Transactions** of each node. The UTXOs are updated with each new addition to the blockchain in order to reflect the current state of each node's NBCs.
-![utxos](https://user-images.githubusercontent.com/94255085/227732179-9776d321-ecbe-4799-84ae-1c9a4c9a9213.png)
+
 * When creating a new block to fill, the node also creates a deepcopy of the current UTXOs, named **Temp_UTXOs**. The node then pops transactions from the top of the pending queue validating them before adding to the block. If the transaction popped refers to an amount that can be covered by the sender's current state of UTXOs the Temp_UTXOs is updated (some of the senders UTXOs are considered spent by the viewpoint of the block) and the transaction is added to the block. 
+![utxos](https://user-images.githubusercontent.com/94255085/227736703-10383964-4ccf-482f-88f3-be0d25d0815a.png)
 
 3.3 **The Mining Process**
 * Once the number of transactions in the block is equal to the **capacity** of the block (which is fixed) the node can start mining the block, in hopes of finding the proper **nonce** and adding to the Blockchain.  
 * If the block finds a proper nonce it adds the block to its Blockchain and broadcasts it to the other nodes in the network.
 ![mining2](https://user-images.githubusercontent.com/94255085/227733572-296f389b-26cf-4836-9ddc-a263f06e58c9.png)
 
-3.4 **Receiving a Block mined by someone else**
+3.4 **Receiving a Valid Block mined by someone else**
 * All nodes are miners, which means that there is a possibility another node manages to mine a block faster.
 * In that case, the block we are trying to mine is depracated: the transactions it contains have been validated refering to a previous state of the Blockchain and UTXOs and some of them might have been present in the block that was added to the chain. 
 * In order to solve this, once a **valid block** mined by someone else arrives to the node, the mining process stops. The node's Blockchain object is updated properly (chain and UTXOs) and the Temp_UTXOs list is changed to reflect the current state of the UTXOs in the system.
@@ -80,3 +81,13 @@ Everytime a new transaction arrives it is appended in the list in order to be pr
 * The mining process can then start again from the beginning, in hopes of finding the next block to add to the chain.
 
 ![mined_block_arrival](https://user-images.githubusercontent.com/94255085/227736621-aa06e17b-f76c-4f1f-aa42-4de697e87dc1.png)
+
+3.5 **Receiving an Invalid Block. Resolving a Conflict**
+* Let's assume that two nodes manage to each mine a block at the same time (a possible scenario, especially considering small difficulty values). We will refer to these two mined blocks as block_A and block_B.
+* In that case, both nodes will broadcast their mined blocks at the same time. Some nodes in the network will receive block_A first and some others will receive block_B first. This means, that there are nodes in the system with different perspectives of the current UTXOs instance. 
+* Furthermore, when the next block is mined it will be considered invalid by some of the nodes in the network. Let's say that the node that mined the new block had previously received block_A first. This means that the new block's previous_hash field refers to block_A. The nodes that have received block_B first, will not accept this block as it doesn't correspond to the current instance of the chain they have. 
+* To resolve this, when a node receives a new mined block that has a previous_hash that doesn't refer to the last block in the node's current chain, it broadcasts a request to all nodes in the network to send back the length of the chain from their point of view. 
+* The node then decides that the node that has the longest chain has the most accurate perspective of the current state of NBCs in the system and asks that node for its blockchain instance.
+* The current blockchain instance is updated to reflect the longest chain found and the conflict is considred to be resolved.
+
+![conflict](https://user-images.githubusercontent.com/94255085/227737509-a6148cfd-e2fb-41a7-9de2-11be9de42c94.png)
