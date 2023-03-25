@@ -44,7 +44,7 @@
 ![trxnspng](https://user-images.githubusercontent.com/94255085/227729654-36368774-da94-435c-9406-9f2b377df0a9.png)
 
 2.1 **Create and Send Transaction**
-Transactions can only be made between 2 nodes, one is the sender the other is the receiver. 
+* Transactions can only be made between 2 nodes, one is the sender, the other is the receiver. 
 * In order to keep track of the transactions made, each node keeps a list of **Pending Transactions** that works as a FIFO Queue. 
 Everytime a new transaction arrives it is appended in the list in order to be properly processed by the node  (during the mining process).
 * The node that wants to send NBCs to another, creates a new Transaction specifying the Receiver Address and the Amount it wants to transfer.
@@ -55,9 +55,11 @@ Everytime a new transaction arrives it is appended in the list in order to be pr
 * Once a node receives a transaction by someone else, it appends it to its Pending Transactions List.
 
 3. **Mining**
+
 3.1 **Preparing a block to mine**
 * If the node is not already mining it starst filling up a block using transactions from the pending queue. 
 * This block might be added to the blockchain, so it must be valid (up to date with the current state of the Blockchain). This means that not only the Previous Hash field of the block must refer to the hash of the last block in the chain, but the transactions it contains must be **Valid** too (the amount being transferred can be found in the sender's current state of **UTXOs**). 
+
 3.2 **Unspent Output Transactions and Transaction Validation**
 * In order to be able to check this, the Blockchain Object has an attribute named UTXOs, that stores the list of **Unspent Output Transactions** of each node. The UTXOs are updated with each new addition to the blockchain in order to reflect the current state of each node's NBCs.
 ![utxos](https://user-images.githubusercontent.com/94255085/227732179-9776d321-ecbe-4799-84ae-1c9a4c9a9213.png)
