@@ -263,7 +263,7 @@ class Node:
         self.update_pending_transactions(block)
 
         # Update incoming_block flag
-        with (incoming_block_lock):
+        with (self.incoming_block_lock):
             self.incoming_block = False
 
     def mine_block(self, block: Block):
