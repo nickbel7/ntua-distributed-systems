@@ -32,7 +32,7 @@
 -  `utxo.py` : Definition of UTXO
 
 ## How it works
-1. Bootstraping
+1. **Bootstraping**
 ![bootstrapping](https://user-images.githubusercontent.com/94255085/227728144-01632b30-4df5-454a-a7d7-5060f41049f2.png)
 * In order for a node in the network to be able to communicate with the others, it stores the necessary information in a dicionary structure named ring. By default, when a node enters the network, the ring holds no information. The node must first communicate with the Bootstrap. Thus it sends a post request to the Bootstrap with its ip, port and public wallet address . 
 * The Bootstrap node updates its own ring with the information it receives from the other nodes. 
@@ -40,10 +40,18 @@
 * Now the nodes are ready to send transactions to each other. 
 
 
-2. Transactions + Mining
-![trxnspng](https://user-images.githubusercontent.com/94255085/227729379-1cfbc117-d2ec-4a1d-af82-05959594044e.png)
-* Transactions can only be made between 2 nodes, one is the sender the other is the receiver. 
-* In order to keep track of the transactions made, each node keeps a list of **Pending Transactions**. 
+2. **Transactions & Mining**
+![trxnspng](https://user-images.githubusercontent.com/94255085/227729654-36368774-da94-435c-9406-9f2b377df0a9.png)
+
+2.1 **Create and Send Transaction*** 
+Transactions can only be made between 2 nodes, one is the sender the other is the receiver. 
+* In order to keep track of the transactions made, each node keeps a list of **Pending Transactions** that works as a FIFO Queue. 
 Everytime a new transaction arrives it is appended in the list in order to be properly processed by the node  (during the mining process).
 * The node that wants to send NBCs to another, creates a new Transaction specifying the Receiver Address and the Amount it wants to transfer.
 * Once the transaction is created the node signs it with its private signature, appends it to its own Pending Transactions List and then  broadcasts it to the network. 
+
+2.2 **Receive a Transaction**
+* Once a node receives a transaction by someone else, it appends it to its Pending Transactions List.
+* If the node is not already mining it starst filling up a block using transactions from the pending queue. 
+* This block will be mined, so it must be valid (up to date with the current state of the Blockchain). This means that not only the Previous Hash field of the block must refer to the hash of the last block in the chain, but the transactions it contains must be **Valid** too. This means that the amount being transferred can be found in the sender's current state of **UTXOs**. 
+* In order to be able to check this, the Blockchain Object has an attribute named UTXOs, that stores the list of Output Transactions of each node. The UTXOs are updated with each new addition to the blockchain in order to reflect the current state of each node's NBCs.
