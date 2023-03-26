@@ -215,40 +215,43 @@ class Node:
                 # 5. Check if block has reached full capacity
                 if (self.check_full_block()):
                     print("========== BEGINING MINING ⛏️  ============")
-                    original_chain_len = len(self.blockchain.chain)
+                    # original_chain_len = len(self.blockchain.chain)
                     # 6. Mine current_block
                     is_mined_by_me = self.mine_block(self.current_block)
-                    # 6.1 YOU FOUND IT FIRST
-                    if (is_mined_by_me and len(self.blockchain.chain) == original_chain_len):
-                        # 6.1.1 Add block to originanl chain + update ring/wallet
-                        print("🏆 Block was mined by: ", self.id)
-                        # 🔒 LOCK: blockchain_access_lock
-                        print("✅📦! Adding it to the chain")
-                        self.blockchain.chain.append(self.current_block)
-                        # 6.1.2 Update all blockchain/wallet state
-                        self.blockchain.UTXOs = self.temp_utxos
-                        print("UPDATED ORIGINAL UTXOs !")
-                        for transaction in self.current_block.transactions_list:
-                            self.update_wallet_state(transaction)
-                            # append tansactions to blockchain set 
-                            self.blockchain.trxns.add(transaction.transaction_id)
+                    # 6.1 YOU FOUND IT FIRST 
+                    # VALIDATE BLOCK
+                    # 🔒 LOCK: processing_block_lock
+                    with (self.processing_block_lock):
+                        if (is_mined_by_me and self.current_block.validate_block(self.blockchain)):
+                            # 6.1.1 Add block to originanl chain + update ring/wallet
+                            print("🏆 Block was mined by: ", self.id)
+                            # 🔒 LOCK: blockchain_access_lock
+                            print("✅📦! Adding it to the chain")
+                            self.blockchain.chain.append(self.current_block)
+                            # 6.1.2 Update all blockchain/wallet state
+                            self.blockchain.UTXOs = deepcopy(self.temp_utxos)
+                            print("UPDATED ORIGINAL UTXOs !")
+                            for transaction in self.current_block.transactions_list:
+                                self.update_wallet_state(transaction)
+                                # append tansactions to blockchain set 
+                                self.blockchain.trxns.add(transaction.transaction_id)
 
-                        # Benchmarking: dump data
-                        self.dump.timestamp()
-                        #debug
-                        print("🔗 BLOCKCHAIN 🔗")
-                        print([block.hash[:7] for block in self.blockchain.chain])
-                        # 6.1.2 Broadcast it to all others
-                        self.broadcast_block(self.current_block)
+                            # Benchmarking: dump data
+                            self.dump.timestamp()
+                            #debug
+                            print("🔗 BLOCKCHAIN 🔗")
+                            print([block.hash[:7] for block in self.blockchain.chain])
+                            # 6.1.2 Broadcast it to all others
+                            self.broadcast_block(self.current_block)
 
-                        print("Block broadcasted successfully !")
+                            print("Block broadcasted successfully !")
 
                     # 6.2 SOMEONE ELSE FOUND IT
-                    else:
-                        print("🛑 Stopped mining!")
-                        # 6.2.1 Wait until new block has been synchronized
-                        while(self.incoming_block):
-                            continue
+                    # else:
+                    #     print("🛑 Stopped mining!")
+                    #     # 6.2.1 Wait until new block has been synchronized
+                    #     while(self.incoming_block):
+                    #         continue
                         
                     # 7. Create a new (empty) block
                     self.current_block = self.create_new_block()  
@@ -286,16 +289,9 @@ class Node:
         """
         Adds a newly mined block to the chain (assuming it has been validated)
         """
+        # LOCK: blockchain_access_lock
         # Add block to originanl chain
         self.blockchain.chain.append(block)
-        # dump data
-        self.dump.timestamp()
-        # Add transactions to blockchain set
-        for t in block.transactions_list:
-            self.blockchain.trxns.add(t.transaction_id)
-        # debug
-        print("🔗 BLOCKCHAIN 🔗")
-        print([block.hash[:7] for block in self.blockchain.chain])
         # Update UTXOs and wallet accordingly
         for transaction in block.transactions_list:
             self.update_original_utxos(transaction)
@@ -304,6 +300,14 @@ class Node:
         self.temp_utxos = deepcopy(self.blockchain.UTXOs)
         # Update pending_transactions list
         self.update_pending_transactions(block)
+        # dump data
+        self.dump.timestamp()
+        # Add transactions to blockchain set
+        for t in block.transactions_list:
+            self.blockchain.trxns.add(t.transaction_id)
+        # debug
+        print("🔗 BLOCKCHAIN 🔗")
+        print([block.hash[:7] for block in self.blockchain.chain])
 
         # Update incoming_block flag
         with (self.incoming_block_lock):
@@ -326,6 +330,7 @@ class Node:
             # Try a .random() nonce each time (to avoid bias over the nodes)
             current_nonce = random.randint(0, 10000000)
 
+        print("🛑 Stopped mining!")
         return False
 
     def unicast_block(self, node, block):

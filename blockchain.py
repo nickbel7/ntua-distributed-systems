@@ -76,12 +76,12 @@ class Blockchain:
             node.blockchain = response_chain
             return
 
-    def wallet_balance(client_id, UTXOs):      
+    def wallet_balance(self, client_id):      
         """
 	    Get the total wallet balance (based on the wallet of specific client_id)
 		"""
         balance = 0
-        for utxo in UTXOs[client_id]:
+        for utxo in self.UTXOs[client_id]:
              balance += utxo.amount
 
         return balance

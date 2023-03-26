@@ -65,11 +65,16 @@ class Transaction:
         except (ValueError, TypeError):
             return False
 
-    def validate_transaction(self, id, UTXOS):
+    def validate_transaction(self, id, UTXOs):
         """
         Verify signature of sender + 
         Verify sender has enough amount to spend
         """
+        balance = 0
+        for utxo in UTXOs[id]:
+             balance += utxo.amount
+
+             
         if (not self.verify_signature()):
             print("❌ Transaction NOT Validated : Not valid address")
             return False
@@ -78,7 +83,7 @@ class Transaction:
         #     print("❌ Transaction NOT Validated : Not enough coins")
         #     return False
 
-        elif(Blockchain.wallet_balance(id, UTXOS) < self.amount):
+        elif(balance < self.amount):
             print("❌ Transaction NOT Validated : Not enough coins")
             return False
         

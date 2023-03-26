@@ -177,7 +177,7 @@ def get_balance():
     """
     # 1. Get the NBCs attribute from the node object
     balance = node.ring[node.wallet.address]['balance'] # Alternative
-    #  balance = Blockchain.wallet_balance(node.id, node.blockchain.UTXOs)
+    # balance = node.blockchain.wallet_balance(node.id)
 
     return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
@@ -277,7 +277,8 @@ def get_block(data: bytes = Depends(get_body)):
             print("🔗 BLOCKCHAIN 🔗")
             print([block.hash[:7] for block in node.blockchain.chain])
             # Resolve conflict in case of wrong previous_hash
-            node.blockchain.resolve_conflict(node)
+            with(node._blockchain_access_lock):
+                node.blockchain.resolve_conflict(node)
             print("❌📦 Something went wrong with validation 🙁")
 
         return JSONResponse('OK')
