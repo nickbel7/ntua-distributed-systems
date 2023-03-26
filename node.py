@@ -78,7 +78,6 @@ class Node:
 
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
-        self._blockchain_access_lock = threading.Lock()
 
         self.dump = Dump()
 
