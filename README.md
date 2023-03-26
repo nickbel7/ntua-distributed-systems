@@ -1,5 +1,8 @@
 
 ### Semester project for the 'Distributed System' class in 9th semester at NTUA
+<p align="center">
+    <img src="assets/logo-white.png" alt="Noobcash" width="400"/>
+<p>
 
 ### Tools Used + [Dependencies](https://github.com/nickbel7/ntua-distributed-systems/blob/master/requirements.txt)
 1. Python 3.7
