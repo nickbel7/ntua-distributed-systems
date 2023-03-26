@@ -254,16 +254,8 @@ def get_block(data: bytes = Depends(get_body)):
     new_block = pickle.loads(data)
     print("New block received successfully !")
 
-    # with(node.processing_block_lock):
-    #     while(node.processing_block):
-    #         continue
-    #     node.processing_block = True
-
-    # 0. Wait until new block has been synchronized
-    # while(node.incoming_block):
-    #     continue
-    processing_lock = threading.Lock()
-    with (processing_lock):
+    # Wait until incoming block has finished processing
+    with (node.processing_block_lock):
         # 1. Check validity of block
         if (new_block.validate_block(node.blockchain)):
             # If it is valid:

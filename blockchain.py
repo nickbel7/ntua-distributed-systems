@@ -16,11 +16,15 @@ class Blockchain:
     def __init__(self):
         """
         Initialize a Blockchain
+        chain:                  List of blocks in the original blockchain
+        difficulty:             Number of 0s in block needed for correct nonce to be found
+        maxBlockTransactions    Capacity of a single block
+        UTXOs                   List of deques containing the UTXOs for all nodes in the cluster
+        trxs                    Set of transaction hashes in the original blockhain (to avoid double transactions)
         """
         self.chain = [] # list<Block>
         self.difficulty = mining_difficulty
         self.maxBlockTransactions = block_size
-        self.minimumTransaction = None
         self.UTXOs = []
         self.trxns = set()
         

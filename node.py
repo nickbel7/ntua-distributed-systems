@@ -55,8 +55,12 @@ class Node:
         pending_blocks: All the blocks that are filled with transactions but are not yet mined
         is_mining:      True if the node is in a state of mining the current_block
         incoming_block: True if there has been received another mined 
+        processing_block: True if there is a new incoming block waiting to get validated (used in api.py)
         pending_transactions:  List of transactions destined to be mined
         temp_utxos:     (for validation) Temporary snapshot of UTXOs that is used for the currently mined block
+        
+        incoming_block_lock:    Lock for incoming_block variable
+        processing_block_lock:  Lock for processing_block variable
         """
         self.wallet = Wallet() # create_wallet
         self.ip = None
@@ -201,7 +205,7 @@ class Node:
             # 3. Get the available transaction
             transaction = self.pending_transactions.pop()
             # 4. Continue if it valid given the temporary UTXOs snapshot
-            while (transaction.hash in self.blockchain.trxns):
+            while (transaction.transaction_id in self.blockchain.trxns):
                 transaction = self.pending_transactions.pop()
             if (transaction.validate_transaction(self.ring[str(transaction.sender_address)]['id'], self.temp_utxos)):
                 # Add transaction to the block + update temporary UTXOs
@@ -222,7 +226,7 @@ class Node:
                         self.dump.timestamp()
                         # append tansactions to blockchain set 
                         for t in self.current_block.transactions_list:
-                            self.blockchain.trxns.add(t.hash)
+                            self.blockchain.trxns.add(t.transaction_id)
                         print("✅📦! Adding it to the chain")
                         #debug
                         print("🔗 BLOCKCHAIN 🔗")
@@ -284,7 +288,7 @@ class Node:
         self.dump.timestamp()
         # Add transactions to blockchain set
         for t in block.transactions_list:
-            self.blockchain.trxns.add(t.hash)
+            self.blockchain.trxns.add(t.transaction_id)
         # debug
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])
