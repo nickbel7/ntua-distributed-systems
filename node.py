@@ -201,6 +201,8 @@ class Node:
             # 3. Get the available transaction
             transaction = self.pending_transactions.pop()
             # 4. Continue if it valid given the temporary UTXOs snapshot
+            while (transaction.hash in self.blockchain.trxns):
+                transaction = self.pending_transactions.pop()
             if (transaction.validate_transaction(self.ring[str(transaction.sender_address)]['id'], self.temp_utxos)):
                 # Add transaction to the block + update temporary UTXOs
                 self.current_block.transactions_list.append(transaction)
@@ -218,6 +220,9 @@ class Node:
                         self.blockchain.chain.append(self.current_block)
                         # dump data
                         self.dump.timestamp()
+                        # append tansactions to blockchain set 
+                        for t in self.current_block.transactions_list:
+                            self.blockchain.trxns.add(t.hash)
                         print("✅📦! Adding it to the chain")
                         #debug
                         print("🔗 BLOCKCHAIN 🔗")
@@ -277,6 +282,9 @@ class Node:
         self.blockchain.chain.append(block)
         # dump data
         self.dump.timestamp()
+        # Add transactions to blockchain set
+        for t in block.transactions_list:
+            self.blockchain.trxns.add(t.hash)
         # debug
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])

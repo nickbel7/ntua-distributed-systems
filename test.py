@@ -45,9 +45,9 @@ def send_transactions(file, addr):
     with open(file, 'r') as f:
         for line in f:
             time.sleep(random.uniform(0.1,0.5))
-            #counter+=1
-            #if(counter == 10):
-            #    break
+            counter+=1
+            if(counter == 20):
+                break
             line = line.split()
             receiver_id = int(line[0][2])
             amount = int(line[1])
