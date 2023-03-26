@@ -78,6 +78,7 @@ class Node:
 
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
+        self._blockchain_access_lock = threading.Lock()
 
         self.dump = Dump()
 
@@ -221,19 +222,22 @@ class Node:
                     if (is_mined_by_me and len(self.blockchain.chain) == original_chain_len):
                         # 6.1.1 Add block to originanl chain + update ring/wallet
                         print("🏆 Block was mined by: ", self.id)
-                        self.blockchain.chain.append(self.current_block)
-                        # dump data
-                        self.dump.timestamp()
-                        # append tansactions to blockchain set 
-                        for t in self.current_block.transactions_list:
-                            self.blockchain.trxns.add(t.transaction_id)
+                        # 🔒 LOCK: blockchain_access_lock
                         print("✅📦! Adding it to the chain")
+                        self.blockchain.chain.append(self.current_block)
+                        # 6.1.2 Update all blockchain/wallet state
+                        self.blockchain.UTXOs = self.temp_utxos
+                        print("UPDATED ORIGINAL UTXOs !")
+                        for transaction in self.current_block.transactions_list:
+                            self.update_wallet_state(transaction)
+                            # append tansactions to blockchain set 
+                            self.blockchain.trxns.add(transaction.transaction_id)
+
+                        # Benchmarking: dump data
+                        self.dump.timestamp()
                         #debug
                         print("🔗 BLOCKCHAIN 🔗")
                         print([block.hash[:7] for block in self.blockchain.chain])
-                        for transaction in self.current_block.transactions_list:
-                            self.update_wallet_state(transaction)
-                            self.blockchain.UTXOs = self.temp_utxos
                         # 6.1.2 Broadcast it to all others
                         self.broadcast_block(self.current_block)
 

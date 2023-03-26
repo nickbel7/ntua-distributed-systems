@@ -57,11 +57,6 @@ class Block:
         # Get last block of the chain and check its hash
         prev_block = blockchain.chain[-1]
         
-        #debug
-        print("VALIDATE BLOCK DEBUG:")
-        print("     self.previous_hash: " + str(self.previous_hash))
-        print("     previous_block.hash: " + str(prev_block.hash))
-
         # 1) Check if the previous_hash field is equal to the the hash of the actual previous block
         if ((self.previous_hash != prev_block.hash)):
             print("❌ Error in block validation: Not correct previous_hash")

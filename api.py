@@ -265,14 +265,17 @@ def get_block(data: bytes = Depends(get_body)):
             # node.processing_block = False
             print("Block was ⛏️  by someone else 🧑")
             # 2. Add block to the blockchain
-            node.add_block_to_chain(new_block)
             print("✅📦! Adding it to the chain")
+            node.add_block_to_chain(new_block)
             print("Blockchain length: ", len(node.blockchain.chain))
         
         # Check if latest_block.previous_hash == incoming_block.previous_hash
         elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
-            print("🗑️ Rejected incoming block")
+            print("🗑️  Rejected incoming block")
         else:
+            print("Incoming block previous_hash: ", new_block.previous_hash)
+            print("🔗 BLOCKCHAIN 🔗")
+            print([block.hash[:7] for block in node.blockchain.chain])
             # Resolve conflict in case of wrong previous_hash
             node.blockchain.resolve_conflict(node)
             print("❌📦 Something went wrong with validation 🙁")
@@ -308,7 +311,7 @@ def check_full_ring():
     ! BOOTSTRAP ONLY !
     Checks if all nodes have been added to the ring
     """
-    time.sleep(2)
+    time.sleep(1)
     if (len(node.ring) == total_nodes):
         node.broadcast_ring()
         node.broadcast_blockchain()
