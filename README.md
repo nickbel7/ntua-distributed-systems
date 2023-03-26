@@ -115,6 +115,7 @@ results by presenting in a graph the metrics from the previous experiment
 
 ### Results
 ![Performance](https://user-images.githubusercontent.com/94255085/227796672-f12433e0-cb09-4f98-ba85-a1c4348b68af.jpg)
-![Scalability](https://user-![Performance](https://user-images.githubusercontent.com/94255085/227796645-5e8f5fc5-ac99-4bab-9d52-0c96e30c4af0.jpg)
+ 
 
+![Scalability](https://user-images.githubusercontent.com/94255085/227802461-63ccfbc2-203a-4cd5-81c9-e3fba7d2491a.jpg)
 
