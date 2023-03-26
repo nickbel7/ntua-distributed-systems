@@ -22,6 +22,7 @@ class Blockchain:
         self.maxBlockTransactions = block_size
         self.minimumTransaction = None
         self.UTXOs = []
+        self.trxns = set()
         
     def validate_chain(self):
         """
