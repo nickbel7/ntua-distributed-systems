@@ -182,7 +182,7 @@ def get_balance():
     return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_chain_length")
-async def get_chain_length():
+def get_chain_length():
     """
     Gets the current valid blockchain length of the receiver
     """
@@ -192,7 +192,7 @@ async def get_chain_length():
     return JSONResponse({'chain_length': chain_len}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_chain")
-async def get_chain():
+def get_chain():
     """
     Gets the current valid blockchain of the receiver
     """
