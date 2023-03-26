@@ -92,3 +92,29 @@ Everytime a new transaction arrives it is appended in the list in order to be pr
 
 ![conflict](https://user-images.githubusercontent.com/94255085/227737881-7749f0d9-52c3-4234-8293-7ab49866d323.png)
 
+## Testing the System
+### The tests
+After having set up the system it’s time to test it’s performance and scala-
+bility.
+System performance:
+We set up the Noobcash system for 5 clients. After all nodes join the system,
+each one reads a file that contains transactions to other nodes. All nodes per-
+form the transactions from their files simultaneously.
+We record the following two metrics:
+• Throughput of our system, i.e., number of transactions served per unit
+time.
+• Block time, i.e., the average time required to add a new block to the
+blockchain.
+The above is recorded for the following system set up parameters:
+1. capacity 1, 5, and 10
+2. difficulty 4 and 5
+System scalability:
+We repeat the experiment for 10 clients and we will compare with the previous
+results by presenting in a graph the metrics from the previous experiment
+(y-axis) in relation to the number of clients (x-axis).
+
+### Results
+![Performance](https://user-images.githubusercontent.com/94255085/227796672-f12433e0-cb09-4f98-ba85-a1c4348b68af.jpg)
+![Scalability](https://user-![Performance](https://user-images.githubusercontent.com/94255085/227796645-5e8f5fc5-ac99-4bab-9d52-0c96e30c4af0.jpg)
+
+
