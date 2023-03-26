@@ -177,7 +177,7 @@ def get_balance():
     """
     # 1. Get the NBCs attribute from the node object
     # balance = node.ring[node.wallet.address]['balance'] # Alternative
-    balance = Blockchain.wallet_balance(node.id, node.blockchain.UTXOs[node.id])
+    balance = Blockchain.wallet_balance(node.id, node.blockchain.UTXOs)
 
     return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
